@@ -1,0 +1,5027 @@
+[
+    {
+        "id": "998b1f4407f97de2",
+        "type": "tab",
+        "label": "Weather percentage loss",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "b1787335b869fd32",
+        "type": "http request",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://api.open-meteo.com/v1/forecast?latitude=40.6330&longitude=22.9416&current=temperature_2m,relative_humidity_2m,wind_speed_10m,rain,snowfall,cloud_cover&timezone=auto",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 330,
+        "y": 260,
+        "wires": [
+            [
+                "ccc7e51435a97f7a"
+            ]
+        ]
+    },
+    {
+        "id": "b5845a5b177d253e",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 260,
+        "wires": [
+            [
+                "ee3e3c744b6d8b70",
+                "b1787335b869fd32"
+            ]
+        ]
+    },
+    {
+        "id": "a1b1270190e14e90",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "current weather function",
+        "func": "var data= msg.payload;\n//keep only needed PM\n\nlet current_weather= data.current;\n// Get the current date and time\nlet now = new Date();\n\n// Format the date components\nlet year = now.getFullYear();\nlet month = ('0' + (now.getMonth() + 1)).slice(-2);\nlet day = ('0' + now.getDate()).slice(-2);\n\n// Format the time components\nlet hours = ('0' + now.getHours()).slice(-2);\nlet minutes = ('0' + now.getMinutes()).slice(-2);\n\n// Combine the components into the desired format\nlet formattedTime = `${year}-${month}-${day}T${hours}:${minutes}`;\n    \nmsg.payload={};\n    \n    msg.payload.lat= data.latitude;\n    msg.payload.lon= data.longitude;\n    msg.payload.time = current_weather.time;\n    msg.payload.temperature_2m = current_weather.temperature_2m;\n    msg.payload.wind_speed_10m = current_weather.wind_speed_10m;\n    msg.payload.relative_humidity_2m = current_weather.relative_humidity_2m;\n    msg.payload.rain = current_weather.rain;\n    msg.payload.snowfall = current_weather.snowfall;\n    msg.payload.cloud_cover = current_weather.cloud_cover;\n    msg.payload.measurement_time = formattedTime.trim();\n\n    // Ensure the strings are correctly formatted\n    msg.payload.measurement_time = msg.payload.measurement_time.replace(/[\\n↵]/g, '');\n\n\nnode.send([msg]);\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 670,
+        "y": 260,
+        "wires": [
+            [
+                "a365efe48c4a98a6",
+                "355fc2defd095922"
+            ]
+        ]
+    },
+    {
+        "id": "3e44d1e16ea75865",
+        "type": "csv",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "sep": ",",
+        "hdrin": "",
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\n",
+        "temp": "lat,lon,time,temperature_2m,wind_speed_10m,relative_humidity_2m,rain,snowfall,cloud_cover,measurement_time",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 1070,
+        "y": 260,
+        "wires": [
+            [
+                "0961f92fb2df6be4"
+            ]
+        ]
+    },
+    {
+        "id": "0961f92fb2df6be4",
+        "type": "file",
+        "z": "998b1f4407f97de2",
+        "name": "Store results",
+        "filename": "/place_your_path/current_weather.csv",
+        "filenameType": "str",
+        "appendNewline": false,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 1130,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "362eed84e5c0b504",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "create table current",
+        "func": "msg.topic = 'create table current_weather (lat NUMBER,lon NUMBER,time TEXT UNIQUE ,temperature_2m NUMBER,wind_speed_10m NUMBER,relative_humidity_2m NUMBER,rain NUMBER,snowfall NUMBER,cloud_cover NUMBER,measurement_time TEXT)';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1590,
+        "y": 200,
+        "wires": [
+            [
+                "8b133bfc160958ff"
+            ]
+        ]
+    },
+    {
+        "id": "b2116bb24fe90c39",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "return table current",
+        "func": "msg.topic='select * from current_weather';\nreturn msg;\n\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1580,
+        "y": 260,
+        "wires": [
+            [
+                "fce419b1d528d3fd"
+            ]
+        ]
+    },
+    {
+        "id": "060299be4fc3ffa1",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1400,
+        "y": 260,
+        "wires": [
+            [
+                "b2116bb24fe90c39"
+            ]
+        ]
+    },
+    {
+        "id": "355fc2defd095922",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "insert table",
+        "func": "var obj = msg.payload;  // Object from the inject node\n\n// Construct the SQL query\nvar columns = Object.keys(obj).join(\", \");\nvar values = Object.values(obj).map(val => `'${val}'`).join(\", \");\nvar query = `INSERT INTO current_weather (${columns}) VALUES (${values}) ON CONFLICT(time) DO NOTHING;`;\n\n// Set the SQL query to msg.topic\nmsg.topic = query;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 890,
+        "y": 260,
+        "wires": [
+            [
+                "fafe7f90cb239b0c",
+                "3e44d1e16ea75865",
+                "510c2b287a2b302d"
+            ]
+        ]
+    },
+    {
+        "id": "510c2b287a2b302d",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "msg.payload",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1090,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "e3c79e6f043e55f1",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1890,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "d9944afab1659075",
+        "type": "link in",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "links": [
+            "fafe7f90cb239b0c"
+        ],
+        "x": 1695,
+        "y": 160,
+        "wires": [
+            [
+                "8b133bfc160958ff"
+            ]
+        ]
+    },
+    {
+        "id": "fafe7f90cb239b0c",
+        "type": "link out",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "links": [
+            "d9944afab1659075"
+        ],
+        "x": 1005,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "ccc7e51435a97f7a",
+        "type": "json",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 470,
+        "y": 260,
+        "wires": [
+            [
+                "a1b1270190e14e90"
+            ]
+        ]
+    },
+    {
+        "id": "7758f89523aea540",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "intercept and compare",
+        "func": "var data = msg.payload;\n\nvar temperature = data.temperature_2m;\nvar windSpeed = data.wind_speed_10m;\nvar humidity = data.relative_humidity_2m;\nvar rain = data.rain;\nvar snowfall = data.snowfall;\nvar cloud_cover = data.cloud_cover;\n\nvar localclusters_temp = global.get(\"foundclusters_temp\");\nvar localclusters_wind = global.get(\"foundclusters_wind\");\nvar localclusters_humidity = global.get(\"foundclusters_humidity\");\nvar localclusters_rain = global.get(\"foundclusters_rain\");\nvar localclusters_snowfall = global.get(\"foundclusters_snowfall\");\nvar localclusters_cloudCover = global.get(\"foundclusters_cloudCover\");\n\n\nvar overall_cluster_temp = -1;\nvar overall_cluster_wind = -1;\nvar overall_cluster_humidity = -1;\nvar overall_cluster_rain = -1;\nvar overall_cluster_snowfall = -1;\nvar overall_cluster_cloud_cover = -1;\n\n\nvar diff_temp;\nvar diff_wind;\nvar diff_humidity;\nvar diff_rain;\nvar diff_snowfall;\nvar diff_cloud_cover;\n\n\nvar min_temp = 10000000;\nvar min_wind = 10000000;\nvar min_humidity = 10000000;\nvar min_rain = 10000000;\nvar min_snowfall = 10000000;\nvar min_cloud_cover = 10000000;\n\n// Find the closest cluster for temperature\nfor (var k = 0; k < localclusters_temp.length; k++) {\n    diff_temp = Math.abs(localclusters_temp[k].centroid[0] - temperature);\n    if (diff_temp < min_temp) {\n        \n        overall_cluster_temp = k;\n        min_temp = diff_temp;\n    }\n}\n\n// Find the closest cluster for wind speed\nfor (var k = 0; k < localclusters_wind.length; k++) {\n    diff_wind = Math.abs(localclusters_wind[k].centroid[0] - windSpeed);\n    if (diff_wind < min_wind) {\n        overall_cluster_wind = k;\n        min_wind = diff_wind;\n    }\n}\n\n// Find the closest cluster for humidity\nfor (var k = 0; k < localclusters_humidity.length; k++) {\n    diff_humidity = Math.abs(localclusters_humidity[k].centroid[0] - humidity);\n    if (diff_humidity < min_humidity) {\n        overall_cluster_humidity = k;\n        min_humidity = diff_humidity;\n    }\n}\n\n// Find the closest cluster for rain\nfor (var k = 0; k < localclusters_rain.length; k++) {\n    diff_rain = Math.abs(localclusters_rain[k].centroid[0] - rain);\n    if (diff_rain < min_rain) {\n        overall_cluster_rain = k;\n        min_rain = diff_rain;\n    }\n}\n\n// Find the closest cluster for snowfall\nfor (var k = 0; k < localclusters_snowfall.length; k++) {\n    diff_snowfall = Math.abs(localclusters_snowfall[k].centroid[0] - snowfall);\n    if (diff_snowfall < min_snowfall) {\n        overall_cluster_snowfall = k;\n        min_snowfall = diff_snowfall;\n    }\n}\n\n// Find the closest cluster for cloud cover\nfor (var k = 0; k < localclusters_cloudCover.length; k++) {\n    diff_cloud_cover = Math.abs(localclusters_cloudCover[k].centroid[0] - cloud_cover);\n    if (diff_cloud_cover < min_cloud_cover) {\n        overall_cluster_cloud_cover = k;\n        min_cloud_cover = diff_cloud_cover;\n    }\n}\n\n// Prepare the result payload\nvar messages = [];\n\n// Define small deviations for each attribute\nvar deviations = [\n    { lat: 0.0001, lon: 0.0001 },\n    { lat: -0.0001, lon: 0.0001 },\n    { lat: 0.0001, lon: -0.0001 },\n    { lat: -0.0001, lon: -0.0001 },\n    { lat: 0.0002, lon: 0.0002 },\n    { lat: -0.0002, lon: 0.0002 }\n];\n\n// Temperature message\nvar tempPayload = {\n    name: \"Temperature\",\n    lat: data.lat + deviations[0].lat,\n    lon: data.lon + deviations[0].lon,\n    time: data.time,\n    temperature: temperature\n};\n\nif (overall_cluster_temp === 0) {\n    tempPayload.temp_state = \"Low temperature\";\n    tempPayload.iconColor = \"blue\";\n} else if (overall_cluster_temp === 1) {\n    tempPayload.temp_state = \"Good temperature\";\n    tempPayload.iconColor = \"green\";\n} else if (overall_cluster_temp === 2) {\n    tempPayload.temp_state = \"High temperature\";\n    tempPayload.iconColor = \"red\";\n}\nmessages.push({ payload: tempPayload });\n\n// Wind speed message\nvar windPayload = {\n    name: \"Wind Speed\",\n    lat: data.lat + deviations[1].lat,\n    lon: data.lon + deviations[1].lon,\n    time: data.time,\n    windSpeed: windSpeed\n};\n\nif (overall_cluster_wind === 0) {\n    windPayload.wind_state = \"Low wind\";\n    windPayload.iconColor = \"green\";\n} else if (overall_cluster_wind === 1) {\n    windPayload.wind_state = \"Moderate wind\";\n    windPayload.iconColor = \"orange\";\n} else if (overall_cluster_wind === 2) {\n    windPayload.wind_state = \"High wind\";\n    windPayload.iconColor = \"red\";\n}\nmessages.push({ payload: windPayload });\n\n// Humidity message\nvar humidityPayload = {\n    name: \"Humidity\",\n    lat: data.lat + deviations[2].lat,\n    lon: data.lon + deviations[2].lon,\n    time: data.time,\n    humidity: humidity\n};\nif (overall_cluster_humidity === 0) {\n    humidityPayload.humidity_state = \"Low relative humidity\";\n    humidityPayload.iconColor = \"green\";\n} else if (overall_cluster_humidity === 1) {\n    humidityPayload.humidity_state = \"Moderate relative humidity\";\n    humidityPayload.iconColor = \"orange\";\n} else if (overall_cluster_humidity === 2) {\n    humidityPayload.humidity_state = \"High relative humidity\";\n    humidityPayload.iconColor = \"red\";\n}\nmessages.push({ payload: humidityPayload });\n\n// Rain message\nvar rainPayload = {\n    name: \"Rain\",\n    lat: data.lat + deviations[3].lat,\n    lon: data.lon + deviations[3].lon,\n    time: data.time,\n    rain: rain\n};\nif (overall_cluster_rain === 0) {\n    rainPayload.rain_state = \"No rain appears. Low possibilities for shower.\";\n    rainPayload.iconColor = \"green\";\n} else if (overall_cluster_rain === 1) {\n    rainPayload.rain_state = \"Rainy weather.\";\n    rainPayload.iconColor = \"orange\";\n} else if (overall_cluster_rain === 2) {\n    rainPayload.rain_state = \"Heave rainy weather. Stormy weather!\";\n    rainPayload.iconColor = \"red\";\n}\nmessages.push({ payload: rainPayload });\n\n// Snowfall message\nvar snowfallPayload = {\n    name: \"Snowfall\",\n    lat: data.lat + deviations[4].lat,\n    lon: data.lon + deviations[4].lon,\n    time: data.time,\n    snowfall: snowfall\n};\nif (overall_cluster_snowfall === 0) {\n    snowfallPayload.snowfall_state = \"No snowfall appears.\";\n    snowfallPayload.iconColor = \"green\";\n} else if (overall_cluster_snowfall === 1) {\n    snowfallPayload.snowfall_state = \"Moderate amount of snow.\";\n    snowfallPayload.iconColor = \"orange\";\n} else if (overall_cluster_snowfall === 2) {\n    snowfallPayload.snowfall_state = \"Heavy snowfall!\";\n    snowfallPayload.iconColor = \"red\";\n}\nmessages.push({ payload: snowfallPayload });\n\n// Cloud cover message\nvar cloudPayload = {\n    name: \"Cloud Cover\",\n    lat: data.lat + deviations[5].lat,\n    lon: data.lon + deviations[5].lon,\n    time: data.time,\n    cloud_cover: cloud_cover\n};\nif (overall_cluster_cloud_cover === 0) {\n    cloudPayload.cloud_state = \"Clear sky\";\n    cloudPayload.iconColor = \"green\";\n} else if (overall_cluster_cloud_cover === 1) {\n    cloudPayload.cloud_state = \"Partly cloudy sky\";\n    cloudPayload.iconColor = \"orange\";\n} else if (overall_cluster_cloud_cover === 2) {\n    cloudPayload.cloud_state = \"Heavy cloudy sky\";\n    cloudPayload.iconColor = \"red\";\n}\nmessages.push({ payload: cloudPayload });\n\n// Return all messages\nreturn [messages];",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
+        "y": 200,
+        "wires": [
+            [
+                "37f3c0f0818e2c04",
+                "43df179d3f0e7ad4"
+            ]
+        ]
+    },
+    {
+        "id": "43df179d3f0e7ad4",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 900,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "8b133bfc160958ff",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1770,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "fce419b1d528d3fd",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1770,
+        "y": 260,
+        "wires": [
+            [
+                "e3c79e6f043e55f1"
+            ]
+        ]
+    },
+    {
+        "id": "a365efe48c4a98a6",
+        "type": "delay",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 480,
+        "y": 200,
+        "wires": [
+            [
+                "7758f89523aea540"
+            ]
+        ]
+    },
+    {
+        "id": "c8760bc01a701bae",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "filter",
+        "func": "var temperature = new Array();\nvar wind_speed_10m = new Array();\nvar relative_humidity_2m = new Array();\nvar rain = new Array();\nvar snowfall = new Array();\nvar cloud_cover = new Array();\n\ntemperature[0] = msg.payload.col4;\nwind_speed_10m[0]= msg.payload.col5;\nrelative_humidity_2m[0] = msg.payload.col6;\nrain[0] = msg.payload.col7;\nsnowfall[0] = msg.payload.col8;\ncloud_cover[0] = msg.payload.col9;\n\nmsg.payload = {};\nmsg.payload = {\n    temperature: temperature,\n    wind_speed_10:wind_speed_10m,\n    relative_humidity_2m: relative_humidity_2m,\n    rain: rain,\n    snowfall: snowfall,\n    cloud_cover:cloud_cover                \n};\nreturn msg;\n\n\n\n\n\n\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 290,
+        "y": 380,
+        "wires": [
+            [
+                "7915a2bd409c8ff9"
+            ]
+        ]
+    },
+    {
+        "id": "6142307d0a88480e",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "kmeans Clusters",
+        "func": "var clusterMaker = context.global.clusters;\n\nclusterMaker.k(3);\nclusterMaker.iterations(750);\n\n\nlet tempDataForClustering = msg.payload.map(item => [item.temperature[0]]);\nclusterMaker.data(tempDataForClustering);\n\n// Perform temperature clustering\nlet tempClusters = clusterMaker.clusters();\n\n// Sort clusters based on the temperature centroid (0 index)\ntempClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted temperature clusters globally\nglobal.set(\"foundclusters_temp\", tempClusters);\n\n\n// Data for wind speed clustering\nlet windDataForClustering = msg.payload.map(item => [item.wind_speed_10[0]]);\nclusterMaker.data(windDataForClustering);\n\n// Perform wind speed clustering\nlet windClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\nwindClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_wind\", windClusters);\n\n\n// Data for humidity clustering\nlet humidityDataForClustering = msg.payload.map(item => [item.relative_humidity_2m[0]]);\nclusterMaker.data(humidityDataForClustering);\n\n// Perform wind speed clustering\nlet humidityClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\nhumidityClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_humidity\", humidityClusters);\n\n\n// Data for rain clustering\nlet rainDataForClustering = msg.payload.map(item => [item.rain[0]]);\nclusterMaker.data(rainDataForClustering);\n\n// Perform wind speed clustering\nlet rainClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\nrainClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_rain\", rainClusters);\n\n\n// Data for humidity clustering\nlet snowfallDataForClustering = msg.payload.map(item => [item.snowfall[0]]);\nclusterMaker.data(snowfallDataForClustering);\n\n// Perform wind speed clustering\nlet snowfallClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\nsnowfallClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_snowfall\", snowfallClusters);\n\n\n// Data for humidity clustering\nlet cloudCoverDataForClustering = msg.payload.map(item => [item.cloud_cover[0]]);\nclusterMaker.data(cloudCoverDataForClustering);\n\n// Perform wind speed clustering\nlet cloudCoverClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\ncloudCoverClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_cloudCover\", cloudCoverClusters);\n\n\n// Return the sorted clusters separately in the payload\nmsg.payload = {\n    sortedByTemp: tempClusters,\n    sortedByWind: windClusters,\n    sortedByHumidity: humidityClusters,\n    sortedByRain: rainClusters,\n    sortedBySnowfall: snowfallClusters,\n    sortedByCloudCover: cloudCoverClusters\n};\nreturn msg;\n\n\n\n\n\n\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 610,
+        "y": 380,
+        "wires": [
+            [
+                "a60d46a493dc1d7b"
+            ]
+        ]
+    },
+    {
+        "id": "a60d46a493dc1d7b",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 810,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "4c431fe083d1edb6",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "insert table",
+        "func": "var csvData = msg.payload;\n    msg.topic = \"INSERT OR IGNORE INTO forecast_weather (lat, lon, time, temperature_2m, wind_speed_10m, relative_humidity_2m, rain, snowfall, cloud_cover, measurement_time) VALUES \";\n    \n    var valuesList = csvData.map(row => {\n        var values = Object.values(row).map(value => {\n            return value === \"\" ? \"NULL\" : \"'\" + value.toString().replace(/'/g, \"''\") + \"'\";\n        });\n        return `(${values.join(\",\")})`;\n    });\n    \n    msg.topic += valuesList.join(\",\") + \" ON CONFLICT(time) DO NOTHING\";\n\nreturn msg;\n\n\n\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 890,
+        "y": 600,
+        "wires": [
+            [
+                "dea0b0b118ab0c9d",
+                "96fe95834f7b8da4",
+                "8f313963a3dfc8ef"
+            ]
+        ]
+    },
+    {
+        "id": "cd4198fef6f3cec8",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 700,
+        "wires": [
+            [
+                "67c91a3380cabde9",
+                "f73d9585399f9a18",
+                "7f6adf38a8dc1db8"
+            ]
+        ]
+    },
+    {
+        "id": "f73d9585399f9a18",
+        "type": "http request",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://api.open-meteo.com/v1/forecast?latitude=40.6330&longitude=22.9416&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,rain,showers,snowfall,cloud_cover&forecast_days=3&timezone=auto",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 310,
+        "y": 600,
+        "wires": [
+            [
+                "1e3ea7b215e3bb0f"
+            ]
+        ]
+    },
+    {
+        "id": "93670a353881e51a",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "future weather function",
+        "func": "var data = msg.payload;\nmsg.payload = [];\n\n// Get the current date and time\nlet now = new Date();\n\n// Format the date components\nlet year = now.getFullYear();\nlet month = ('0' + (now.getMonth() + 1)).slice(-2);\nlet day = ('0' + now.getDate()).slice(-2);\n\n// Format the time components\nlet hours = ('0' + now.getHours()).slice(-2);\nlet minutes = ('0' + now.getMinutes()).slice(-2);\n\n// Combine the components into the desired format\nlet formattedTime = `${year}-${month}-${day}T${hours}:${minutes}`;\n\nfor (var k = 0; k < data.hourly.time.length; k++) {\n    msg.payload[k] = {};  // Initialize as an empty object\n        \n        msg.payload[k].lat = data.latitude;\n        msg.payload[k].lon = data.longitude;\n        msg.payload[k].time = data.hourly.time[k];\n        msg.payload[k].temperature_2m = data.hourly.temperature_2m[k];\n        msg.payload[k].wind_speed_10m = data.hourly.wind_speed_10m[k];\n        msg.payload[k].relative_humidity_2m = data.hourly.relative_humidity_2m[k];\n        msg.payload[k].rain = data.hourly.rain[k];\n        msg.payload[k].snowfall = data.hourly.snowfall[k];\n        msg.payload[k].cloud_cover = data.hourly.cloud_cover[k];\n        \n        msg.payload[k].measurement_time= formattedTime.trim();\n        msg.payload.measurement_time = msg.payload[k].measurement_time.replace(/[\\n↵]/g, '');\n\n}\nreturn msg;\n\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 600,
+        "wires": [
+            [
+                "e245970ba63510e8",
+                "4c431fe083d1edb6"
+            ]
+        ]
+    },
+    {
+        "id": "96fe95834f7b8da4",
+        "type": "csv",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "sep": ",",
+        "hdrin": "",
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\n",
+        "temp": "lat,lon,time,temperature_2m,wind_speed_10m,relative_humidity_2m,rain,showers,snowfall,cloud_cover,measurement_time",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 1110,
+        "y": 600,
+        "wires": [
+            [
+                "bd876acef4491aee"
+            ]
+        ]
+    },
+    {
+        "id": "bd876acef4491aee",
+        "type": "file",
+        "z": "998b1f4407f97de2",
+        "name": "Store results",
+        "filename": "/place_your_path/future_weather.csv",
+        "filenameType": "str",
+        "appendNewline": false,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 1210,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1e3ea7b215e3bb0f",
+        "type": "json",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 470,
+        "y": 600,
+        "wires": [
+            [
+                "93670a353881e51a"
+            ]
+        ]
+    },
+    {
+        "id": "6dcff9a201784303",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "create table forecast_weather",
+        "func": "msg.topic = 'create table forecast_weather (lat NUMBER,lon NUMBER,time TEXT UNIQUE,temperature_2m NUMBER,wind_speed_10m NUMBER,relative_humidity_2m NUMBER,rain NUMBER,snowfall NUMBER,cloud_cover NUMBER,measurement_time TEXT)';\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1630,
+        "y": 600,
+        "wires": [
+            [
+                "e3888bf51e71141c"
+            ]
+        ]
+    },
+    {
+        "id": "be740965289ab2c6",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1400,
+        "y": 600,
+        "wires": [
+            [
+                "6dcff9a201784303"
+            ]
+        ]
+    },
+    {
+        "id": "df43a0b64f363636",
+        "type": "link in",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "links": [
+            "0a14191a5329f388",
+            "dea0b0b118ab0c9d"
+        ],
+        "x": 1765,
+        "y": 560,
+        "wires": [
+            [
+                "e3888bf51e71141c"
+            ]
+        ]
+    },
+    {
+        "id": "dea0b0b118ab0c9d",
+        "type": "link out",
+        "z": "998b1f4407f97de2",
+        "name": "link out 2",
+        "links": [
+            "df43a0b64f363636"
+        ],
+        "x": 1015,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "dc2c9194eb7dc83a",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "return table forecast_weather",
+        "func": "msg.topic='select * from forecast_weather';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1620,
+        "y": 680,
+        "wires": [
+            [
+                "ca2a226b5858933b"
+            ]
+        ]
+    },
+    {
+        "id": "17cd995109b3a682",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1400,
+        "y": 680,
+        "wires": [
+            [
+                "dc2c9194eb7dc83a"
+            ]
+        ]
+    },
+    {
+        "id": "edf2427182c45aaf",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1850,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "e3888bf51e71141c",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1850,
+        "y": 600,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ca2a226b5858933b",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1830,
+        "y": 680,
+        "wires": [
+            [
+                "edf2427182c45aaf"
+            ]
+        ]
+    },
+    {
+        "id": "21fdb236986f1baf",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "intercept and compare",
+        "func": "var data = msg.payload;\n\nvar temperature = data.temperature_2m;\nvar windSpeed = data.wind_speed_10m;\nvar humidity = data.relative_humidity_2m;\nvar rain = data.rain;\nvar snowfall = data.snowfall;\nvar cloud_cover = data.cloud_cover;\n\nvar localclusters_temp = global.get(\"foundclusters_temp\");\nvar localclusters_wind = global.get(\"foundclusters_wind\");\nvar localclusters_humidity = global.get(\"foundclusters_humidity\");\nvar localclusters_rain = global.get(\"foundclusters_rain\");\nvar localclusters_snowfall = global.get(\"foundclusters_snowfall\");\nvar localclusters_cloudCover = global.get(\"foundclusters_cloudCover\");\n\n\nvar overall_cluster_temp = -1;\nvar overall_cluster_wind = -1;\nvar overall_cluster_humidity = -1;\nvar overall_cluster_rain = -1;\nvar overall_cluster_snowfall = -1;\nvar overall_cluster_cloud_cover = -1;\n\n\nvar diff_temp;\nvar diff_wind;\nvar diff_humidity;\nvar diff_rain;\nvar diff_snowfall;\nvar diff_cloud_cover;\n\n\nvar min_temp = 10000000;\nvar min_wind = 10000000;\nvar min_humidity = 10000000;\nvar min_rain = 10000000;\nvar min_snowfall = 10000000;\nvar min_cloud_cover = 10000000;\n\n// Find the closest cluster for temperature\nfor (var k = 0; k < localclusters_temp.length; k++) {\n    diff_temp = Math.abs(localclusters_temp[k].centroid[0] - temperature);\n    if (diff_temp < min_temp) {\n        overall_cluster_temp = k;\n        min_temp = diff_temp;\n    }\n}\n\n// Find the closest cluster for wind speed\nfor (var k = 0; k < localclusters_wind.length; k++) {\n    diff_wind = Math.abs(localclusters_wind[k].centroid[0] - windSpeed);\n    if (diff_wind < min_wind) {\n        overall_cluster_wind = k;\n        min_wind = diff_wind;\n    }\n}\n\n// Find the closest cluster for humidity\nfor (var k = 0; k < localclusters_humidity.length; k++) {\n    diff_humidity = Math.abs(localclusters_humidity[k].centroid[0] - humidity);\n    if (diff_humidity < min_humidity) {\n        overall_cluster_humidity = k;\n        min_humidity = diff_humidity;\n    }\n}\n\n// Find the closest cluster for rain\nfor (var k = 0; k < localclusters_rain.length; k++) {\n    diff_rain = Math.abs(localclusters_rain[k].centroid[0] - rain);\n    if (diff_rain < min_rain) {\n        overall_cluster_rain = k;\n        min_rain = diff_rain;\n    }\n}\n\n// Find the closest cluster for snowfall\nfor (var k = 0; k < localclusters_snowfall.length; k++) {\n    diff_snowfall = Math.abs(localclusters_snowfall[k].centroid[0] - snowfall);\n    if (diff_snowfall < min_snowfall) {\n        overall_cluster_snowfall = k;\n        min_snowfall = diff_snowfall;\n    }\n}\n\n// Find the closest cluster for cloud cover\nfor (var k = 0; k < localclusters_cloudCover.length; k++) {\n    diff_cloud_cover = Math.abs(localclusters_cloudCover[k].centroid[0] - cloud_cover);\n    if (diff_cloud_cover < min_cloud_cover) {\n        overall_cluster_cloud_cover = k;\n        min_cloud_cover = diff_cloud_cover;\n    }\n}\n\n// Prepare the result payload\nmsg.payload = {};\nmsg.payload.name = \"Weather \" + data.time;\nmsg.payload.lat = parseFloat(data.lat) + parseFloat((Math.random() * (0.001 - 0.0001) + 0.0001).toFixed(6));\nmsg.payload.lon = parseFloat(data.lon) + parseFloat((Math.random() * (0.001 - 0.0001) + 0.0001).toFixed(6));\nmsg.payload.time = data.time;\nmsg.payload.temperature = temperature;\nmsg.payload.windSpeed = windSpeed;\nmsg.payload.humidity = humidity;\nmsg.payload.rain = rain;\nmsg.payload.snowfall = snowfall;\nmsg.payload.cloud_cover = cloud_cover;\n\n// Assign state and icon color based on the closest temperature cluster\nif (overall_cluster_temp === 0) {\n    msg.payload.temp_state = \"Low temperature\";\n    msg.payload.temp_iconColor = \"blue\";\n} else if (overall_cluster_temp === 1) {\n    msg.payload.temp_state = \"Good temperature\";\n    msg.payload.temp_iconColor = \"green\";\n} else if (overall_cluster_temp === 2) {\n    msg.payload.temp_state = \"High temperature\";\n    msg.payload.temp_iconColor = \"red\";\n}\n\n// Assign state and icon color based on the closest wind speed cluster\nif (overall_cluster_wind === 0) {\n    msg.payload.wind_state = \"Low wind\";\n    msg.payload.wind_iconColor = \"green\";\n} else if (overall_cluster_wind === 1) {\n    msg.payload.wind_state = \"Moderate wind\";\n    msg.payload.wind_iconColor = \"orange\";\n} else if (overall_cluster_wind === 2) {\n    msg.payload.wind_state = \"High wind\";\n    msg.payload.wind_iconColor = \"red\";\n}\n\n\n// Assign state and icon color based on the closest humidity cluster\nif (overall_cluster_humidity === 0) {\n    msg.payload.humidity_state = \"Low relative humidity\";\n    msg.payload.humidity_iconColor = \"green\";\n} else if (overall_cluster_humidity === 1) {\n    msg.payload.humidity_state = \"Moderate relative humidity\";\n    msg.payload.humidity_iconColor = \"orange\";\n} else if (overall_cluster_humidity === 2) {\n    msg.payload.humidity_state = \"High relative humidity\";\n    msg.payload.humidity_iconColor = \"red\";\n}\n\n\n// Assign state and icon color based on the closest rain cluster\nif (overall_cluster_rain === 0) {\n    msg.payload.rain_state = \"No rain appears. Low possibilities for shower.\";\n    msg.payload.rain_iconColor = \"green\";\n} else if (overall_cluster_rain === 1) {\n    msg.payload.rain_state = \"Rainy weather.\";\n    msg.payload.rain_iconColor = \"orange\";\n} else if (overall_cluster_rain === 2) {\n    msg.payload.rain_state = \"Heave rainy weather. Stormy weather!\";\n    msg.payload.rain_iconColor = \"red\";\n}\n\n\n// Assign state and icon color based on the closest snowfall cluster\nif (overall_cluster_snowfall === 0) {\n    msg.payload.snowfall_state = \"No snowfall appears.\";\n    msg.payload.snowfall_iconColor = \"green\";\n} else if (overall_cluster_snowfall === 1) {\n    msg.payload.snowfall_state = \"Moderate amount of snow.\";\n    msg.payload.snowfall_iconColor = \"orange\";\n} else if (overall_cluster_snowfall === 2) {\n    msg.payload.snowfall_state = \"Heavy snowfall!\";\n    msg.payload.snowfall_iconColor = \"red\";\n}\n\n\n// Assign state and icon color based on the closest cloud cover cluster\nif (overall_cluster_cloud_cover === 0) {\n    msg.payload.cloud_state = \"Clear sky\";\n    msg.payload.cloud_iconColor = \"green\";\n} else if (overall_cluster_cloud_cover === 1) {\n    msg.payload.cloud_state = \"Partly cloudy sky\";\n    msg.payload.cloud_iconColor = \"orange\";\n} else if (overall_cluster_cloud_cover === 2) {\n    msg.payload.cloud_state = \"Heavy cloudy sky\";\n    msg.payload.cloud_iconColor = \"red\";\n}\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 820,
+        "y": 540,
+        "wires": [
+            [
+                "e8e65b83d901039a",
+                "c3bb43bd017ab444"
+            ]
+        ]
+    },
+    {
+        "id": "e245970ba63510e8",
+        "type": "delay",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 480,
+        "y": 540,
+        "wires": [
+            [
+                "d2699ad914b74622"
+            ]
+        ]
+    },
+    {
+        "id": "37f3c0f0818e2c04",
+        "type": "worldmap",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "lat": "",
+        "lon": "",
+        "zoom": "",
+        "layer": "OSMG",
+        "cluster": "",
+        "maxage": "",
+        "usermenu": "show",
+        "layers": "show",
+        "panit": "false",
+        "panlock": "false",
+        "zoomlock": "false",
+        "hiderightclick": "false",
+        "coords": "none",
+        "showgrid": "false",
+        "showruler": "false",
+        "allowFileDrop": "false",
+        "path": "/worldmap",
+        "overlist": "DR,CO,RA,DN",
+        "maplist": "OSMG,OSMC,EsriC,EsriS,UKOS",
+        "mapname": "",
+        "mapurl": "",
+        "mapopt": "",
+        "mapwms": false,
+        "x": 900,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "c3bb43bd017ab444",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1040,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "67c91a3380cabde9",
+        "type": "delay",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "2",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 300,
+        "y": 800,
+        "wires": [
+            [
+                "c593147df2861c06"
+            ]
+        ]
+    },
+    {
+        "id": "e8e65b83d901039a",
+        "type": "worldmap",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "lat": "",
+        "lon": "",
+        "zoom": "",
+        "layer": "OSMG",
+        "cluster": "",
+        "maxage": "1000",
+        "usermenu": "show",
+        "layers": "show",
+        "panit": "false",
+        "panlock": "false",
+        "zoomlock": "false",
+        "hiderightclick": "false",
+        "coords": "none",
+        "showgrid": "false",
+        "showruler": "false",
+        "allowFileDrop": "false",
+        "path": "/worldmap",
+        "overlist": "DR,CO,RA,DN",
+        "maplist": "OSMG,OSMC,EsriC,EsriS,UKOS",
+        "mapname": "",
+        "mapurl": "",
+        "mapopt": "",
+        "mapwms": false,
+        "x": 1040,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "69b788e7ad01e07b",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 130,
+        "y": 1460,
+        "wires": [
+            [
+                "ee8b41922d546f85",
+                "e5156ec22ac5cb6b",
+                "90da0168c71d585a",
+                "89402fccefc9cf4a"
+            ]
+        ]
+    },
+    {
+        "id": "ee8b41922d546f85",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "return table",
+        "func": "msg.topic='select * from current_weather';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 310,
+        "y": 1360,
+        "wires": [
+            [
+                "1e9933c871b26190"
+            ]
+        ]
+    },
+    {
+        "id": "1e9933c871b26190",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 310,
+        "y": 1420,
+        "wires": [
+            [
+                "38dde54b0f378575"
+            ]
+        ]
+    },
+    {
+        "id": "e5156ec22ac5cb6b",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "return table",
+        "func": "msg.topic ='select * from forecast_weather';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 310,
+        "y": 1560,
+        "wires": [
+            [
+                "ee3141385a6b3de3"
+            ]
+        ]
+    },
+    {
+        "id": "ee3141385a6b3de3",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 310,
+        "y": 1500,
+        "wires": [
+            [
+                "a404af7cdd52df30"
+            ]
+        ]
+    },
+    {
+        "id": "39ab14f87fd234fa",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 15",
+        "func": "var data =msg.payload;\nvar diff_arr= [];\n\n\nfunction compareTimes(time1, time2) {\n    var date1 = new Date(time1);\n    var date2 = new Date(time2);\n\n    if (date1 > date2) {\n        return 1; // time1 is greater\n    } else if (date1 < date2) {\n        return -1; // time2 is greater\n    } else {\n        return 0; // times are equal\n    }\n}\n\n\n// Function to parse time and compare the difference\nfunction isWithinMinutes(time1, time2) {\n    var date1 = new Date(time1);\n    var date2 = new Date(time2);    \n\n    var differenceInMinutes = Math.abs((date1.getTime() - date2.getTime()) / 1000 / 60);\n    \n    return differenceInMinutes <= 30;\n}\n\n\n// Function to compare two objects and return the differences\nfunction getDifferences(obj1, obj2) {\n    var diffs = {};\n    for (var key in obj1) {\n        if (obj1.hasOwnProperty(key) && obj2.hasOwnProperty(key)) {\n            if (obj1[key] !== obj2[key]) {\n                diffs[key] = { data0: obj1[key], data1: obj2[key] };\n            }\n        }\n    }\n    return diffs;\n}\n\n\nfor(var i=0; i<data[1].length;i++){\n    for(var k=0; k< data[0].length;k++){\n        if (isWithinMinutes(data[0][k].time, data[1][i].time)) {\n\n            var diffs = getDifferences(data[0][k], data[1][i]);\n            if (Object.keys(diffs).length > 0) {\n\n                var comparison = compareTimes(data[1][i].measurement_time, data[1][i].time);\n                var concatenated_time;\n\n                if (comparison < 0 || comparison >0) {\n                    concatenated_time = data[1][i].measurement_time + \" - \" + data[1][i].time;\n                } else {\n                    // times are equal\n                    concatenated_time = data[0][i].time; // or data[1][i].time since they are the same\n                }\n                \n                diff_arr.push({\n                    reported_forecast_time: concatenated_time,\n                    current_measurement_time: data[0][k].measurement_time,\n                    forecast_measurement_time: data[1][i].measurement_time,\n                    diff_arr: diffs\n                });\n        }\n    }}\n    \n\n}\nnode.error(\"All the same are:\"+ diff_arr.length);\nmsg.payload= diff_arr;\nreturn msg;\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 810,
+        "y": 1460,
+        "wires": [
+            [
+                "9ac09c64fa1378a1"
+            ]
+        ]
+    },
+    {
+        "id": "38dde54b0f378575",
+        "type": "change",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload1",
+                "pt": "msg",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 490,
+        "y": 1420,
+        "wires": [
+            [
+                "5f5493aaa9e4151b"
+            ]
+        ]
+    },
+    {
+        "id": "a404af7cdd52df30",
+        "type": "change",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload2",
+                "pt": "msg",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 490,
+        "y": 1500,
+        "wires": [
+            [
+                "5f5493aaa9e4151b"
+            ]
+        ]
+    },
+    {
+        "id": "5f5493aaa9e4151b",
+        "type": "join",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "2",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 650,
+        "y": 1460,
+        "wires": [
+            [
+                "39ab14f87fd234fa"
+            ]
+        ]
+    },
+    {
+        "id": "2d9fc345f2938277",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1400,
+        "y": 200,
+        "wires": [
+            [
+                "362eed84e5c0b504"
+            ]
+        ]
+    },
+    {
+        "id": "6fbac858c01bdd17",
+        "type": "comment",
+        "z": "998b1f4407f97de2",
+        "name": "current weather",
+        "info": "",
+        "x": 160,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "7d668a6b3a8cfee4",
+        "type": "comment",
+        "z": "998b1f4407f97de2",
+        "name": "forecast",
+        "info": "",
+        "x": 130,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "9ac09c64fa1378a1",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 16",
+        "func": "var data = msg.payload;\nvar new_array = [];\n\nnode.error(data);\n\nfor (var i = 0; i < data.length; i++) {\n    var row = {\n        reported_time: data[i].reported_forecast_time,\n        current_measurement_time: data[i].current_measurement_time,\n        forecast_measurement_time: data[i].forecast_measurement_time,\n        temperature_percentage: 0,\n        wind_speed_percentage: 0,\n        humidity_percentage: 0,\n        rain_percentage: 0,\n        snowfall_percentage: 0,\n        cloud_cover_percentage: 0\n    };\n    \n    if (data[i].diff_arr.temperature_2m && data[i].diff_arr.temperature_2m.data0 && data[i].diff_arr.temperature_2m.data1) {\n        var temp_current = parseFloat(data[i].diff_arr.temperature_2m.data0);\n        var temp_forecast = parseFloat(data[i].diff_arr.temperature_2m.data1);\n        var avg_temp = (temp_current + temp_forecast) / 2;\n        var diff_temp = Math.abs(temp_current - temp_forecast);\n        row.temperature_percentage = parseFloat(((diff_temp / avg_temp) * 100).toFixed(4));\n    }\n\n    if (data[i].diff_arr.wind_speed_10m && data[i].diff_arr.wind_speed_10m.data0 && data[i].diff_arr.wind_speed_10m.data1) {\n        var wind_current = parseFloat(data[i].diff_arr.wind_speed_10m.data0);\n        var wind_forecast = parseFloat(data[i].diff_arr.wind_speed_10m.data1);\n        var avg_wind = (wind_current + wind_forecast) / 2;\n        var diff_wind = Math.abs(wind_current - wind_forecast);\n        row.wind_speed_percentage = parseFloat(((diff_wind / avg_wind) * 100).toFixed(4));\n    }\n\n    if (data[i].diff_arr.relative_humidity_2m && data[i].diff_arr.relative_humidity_2m.data0 && data[i].diff_arr.relative_humidity_2m.data1) {\n        var humidity_current = parseFloat(data[i].diff_arr.relative_humidity_2m.data0);\n        var humidity_forecast = parseFloat(data[i].diff_arr.relative_humidity_2m.data1);\n        var avg_humidity = (humidity_current + humidity_forecast) / 2;\n        var diff_humidity = Math.abs(humidity_current - humidity_forecast);\n        row.humidity_percentage = parseFloat(((diff_humidity / avg_humidity) * 100).toFixed(4));\n    }\n\n    if (data[i].diff_arr.rain && data[i].diff_arr.rain.data0 && data[i].diff_arr.rain.data1) {\n        var rain_current = parseFloat(data[i].diff_arr.rain.data0);\n        var rain_forecast = parseFloat(data[i].diff_arr.rain.data1);\n        var avg_rain = (rain_current + rain_forecast) / 2;\n        var diff_rain = Math.abs(rain_current - rain_forecast);\n        row.rain_percentage = parseFloat(((diff_rain / avg_rain) * 100).toFixed(4));\n    }\n\n    if (data[i].diff_arr.snowfall && data[i].diff_arr.snowfall.data0 && data[i].diff_arr.snowfall.data1) {\n        var snowfall_current = parseFloat(data[i].diff_arr.snowfall.data0);\n        var snowfall_forecast = parseFloat(data[i].diff_arr.snowfall.data1);\n        var avg_snowfall = (snowfall_current + snowfall_forecast) / 2;\n        var diff_snowfall = Math.abs(snowfall_current - snowfall_forecast);\n        row.snowfall_percentage = parseFloat(((diff_snowfall / avg_snowfall) * 100).toFixed(4));\n    }\n\n    if (data[i].diff_arr.cloud_cover && data[i].diff_arr.cloud_cover.data0 && data[i].diff_arr.cloud_cover.data1) {\n        var cloud_current = parseFloat(data[i].diff_arr.cloud_cover.data0);\n        var cloud_forecast = parseFloat(data[i].diff_arr.cloud_cover.data1);\n        var avg_cloud = (cloud_current + cloud_forecast) / 2;\n        var diff_cloud = Math.abs(cloud_current - cloud_forecast);\n        row.cloud_cover_percentage = parseFloat(((diff_cloud / avg_cloud) * 100).toFixed(4));\n    }\n\n    new_array.push(row);\n}\n\nmsg.payload = new_array;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 1520,
+        "wires": [
+            [
+                "10e789f48fef95ac"
+            ]
+        ]
+    },
+    {
+        "id": "5bc2ff97f7778834",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "debug 4",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 980,
+        "y": 1580,
+        "wires": []
+    },
+    {
+        "id": "10e789f48fef95ac",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "insert table",
+        "func": "var data = msg.payload;\n\nvar valueStrings = data.map(function (item) {\n    return \"('\" + item.reported_time + \"', '\" + item.current_measurement_time + \"', '\" + item.forecast_measurement_time + \"', \" + item.temperature_percentage + \", \" + item.wind_speed_percentage + \", \" + item.humidity_percentage + \", \" + item.rain_percentage + \", \" + item.snowfall_percentage + \", \" + item.cloud_cover_percentage + \")\";\n});\n\nmsg.topic = \"INSERT INTO percentage_loss (reported_time, current_measurement_time, forecast_measurement_time, temperature_percentage, wind_speed_percentage, humidity_percentage, rain_percentage, snowfall_percentage, cloud_cover_percentage) VALUES \" + valueStrings.join(', ') + \" ON CONFLICT(reported_time) DO NOTHING\";\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 890,
+        "y": 1520,
+        "wires": [
+            [
+                "d05058d9f962b3d5",
+                "5bc2ff97f7778834"
+            ]
+        ]
+    },
+    {
+        "id": "d05058d9f962b3d5",
+        "type": "link out",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "mode": "link",
+        "links": [
+            "10490afa890d1118"
+        ],
+        "x": 995,
+        "y": 1480,
+        "wires": []
+    },
+    {
+        "id": "672e337cf4276edb",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "create table failure",
+        "func": "msg.topic = 'create table percentage_loss (reported_time TEXT UNIQUE, current_measurement_time TEXT, forecast_measurement_time TEXT, temperature_percentage NUMBER,wind_speed_percentage NUMBER,humidity_percentage NUMBER, rain_percentage NUMBER, snowfall_percentage NUMBER, cloud_cover_percentage NUMBER)';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1420,
+        "y": 1460,
+        "wires": [
+            [
+                "d4dca8c622db7a3b"
+            ]
+        ]
+    },
+    {
+        "id": "bf8b3376d4b1a135",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1240,
+        "y": 1460,
+        "wires": [
+            [
+                "672e337cf4276edb"
+            ]
+        ]
+    },
+    {
+        "id": "10490afa890d1118",
+        "type": "link in",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "links": [
+            "d05058d9f962b3d5"
+        ],
+        "x": 1535,
+        "y": 1420,
+        "wires": [
+            [
+                "d4dca8c622db7a3b"
+            ]
+        ]
+    },
+    {
+        "id": "1e29a0628bce3175",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "return table percentage_loss",
+        "func": "let timePeriod = msg.payload; // Assuming the payload contains the selected time period\n\n// Construct the base query\nlet baseQuery = \"SELECT * FROM percentage_loss\";\nlet query;\n\n// Current date and time in UTC\nlet currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');\n\n// Modify the query based on the selected time period\nswitch (timePeriod) {\n    case '1 day':\n        query = `${baseQuery} WHERE datetime(substr(reported_time, -16, 16)) >= datetime('now', '-1 day')`;\n        break;\n    case '1 week':\n        query = `${baseQuery} WHERE datetime(substr(reported_time, -16, 16)) >= datetime('now', '-7 days')`;\n        break;\n    case '1 month':\n        query = `${baseQuery} WHERE datetime(substr(reported_time, -16, 16)) >= datetime('now', '-1 month')`;\n        break;\n    case 'all':\n        query = baseQuery;\n        break;\n    default:\n        // If an unexpected value is received, use the base query\n        query = baseQuery;\n        break;\n}\n\n// Assign the constructed query to msg.topic\nmsg.topic = query;\n\n// Clear previous values (this depends on your implementation; example with msg.data)\nmsg.data = []; // Clear any previous data if using an array to hold results\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1120,
+        "y": 2620,
+        "wires": [
+            [
+                "dc2df7cad00aa852",
+                "729a21870d7b43e8"
+            ]
+        ]
+    },
+    {
+        "id": "d4dca8c622db7a3b",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1600,
+        "y": 1460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "dc2df7cad00aa852",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1190,
+        "y": 2560,
+        "wires": [
+            [
+                "a176b0fffdb85b62",
+                "f88a23af78677ab8",
+                "e68886147f5d096e",
+                "f5b0a5551d45c99c",
+                "5b62b3bf9e47d73f",
+                "f810b278ce402ce8",
+                "55f42755ca231483",
+                "ca81b89087f7688e",
+                "eaa94bd191182770",
+                "02dedf332ab571b1",
+                "1e95980491085352",
+                "35a8d0ede349dd7a",
+                "628821549b5b62ff"
+            ]
+        ]
+    },
+    {
+        "id": "f88a23af78677ab8",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 17",
+        "func": "let data = msg.payload;\n\n// Assuming msg.payload is an array of objects\nfor (let i = 0; i < data.length; i++) {\n    msg.topic = data[i].reported_time;\n    msg.payload = data[i].temperature_percentage;\n\n    node.send(msg);\n\n}\n\nreturn msg;\n\n// // Assuming msg.payload is an array of objects\n//             let data = msg.payload;\n\n//             // Extract series, labels, and data points for the chart\n//             let series = [\"Temperature Percentage\"];\n//             let labels = [];\n//             let dataPoints = [];\n\n//             for (let i = 0; i < data.length; i++) {\n//                 labels.push(data[i].reported_time);\n//                 dataPoints.push(data[i].temperature_percentage);\n//             }\n\n//             // Construct the payload for the chart\n//             msg.payload = [{\n//                 series: series,\n//                 data: [dataPoints],\n//                 labels: labels\n//             }];\n\n//             return msg;\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2360,
+        "wires": [
+            [
+                "b20e8a237fd901e1"
+            ]
+        ]
+    },
+    {
+        "id": "b67ac0c06406c836",
+        "type": "comment",
+        "z": "998b1f4407f97de2",
+        "name": "percentage loss",
+        "info": "",
+        "x": 140,
+        "y": 1340,
+        "wires": []
+    },
+    {
+        "id": "5759dccf52a5601a",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1260,
+        "y": 1540,
+        "wires": [
+            [
+                "31f967de9fee0ef0"
+            ]
+        ]
+    },
+    {
+        "id": "31f967de9fee0ef0",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "drop",
+        "func": "msg.topic = 'drop table percentage_loss';\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 1540,
+        "wires": [
+            [
+                "a6ae2b05a2ba4489"
+            ]
+        ]
+    },
+    {
+        "id": "a6ae2b05a2ba4489",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1570,
+        "y": 1540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5af5af4875e8e69a",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1400,
+        "y": 760,
+        "wires": [
+            [
+                "a938e75f531ce69e"
+            ]
+        ]
+    },
+    {
+        "id": "a938e75f531ce69e",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "drop",
+        "func": "msg.topic = 'drop table forecast_weather';\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1550,
+        "y": 760,
+        "wires": [
+            [
+                "f6f7a2fed9d68968"
+            ]
+        ]
+    },
+    {
+        "id": "f6f7a2fed9d68968",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1690,
+        "y": 760,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5dea29745adcfa97",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1400,
+        "y": 340,
+        "wires": [
+            [
+                "dea2737f9c63cade"
+            ]
+        ]
+    },
+    {
+        "id": "dea2737f9c63cade",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "drop",
+        "func": "msg.topic = 'drop table current_weather';\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1550,
+        "y": 340,
+        "wires": [
+            [
+                "b5e57b2e223588f7"
+            ]
+        ]
+    },
+    {
+        "id": "b5e57b2e223588f7",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1770,
+        "y": 340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "8c6429e0c1156854",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "return table historical",
+        "func": "var now = new Date();\nvar month = (now.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-indexed\n\n// Construct the SQL query\nmsg.topic = `SELECT * FROM historical_data WHERE strftime('%m', time) = '${month}';`;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 320,
+        "wires": [
+            [
+                "9220b4cf35a89376"
+            ]
+        ]
+    },
+    {
+        "id": "9220b4cf35a89376",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 530,
+        "y": 320,
+        "wires": [
+            [
+                "9fe6075921a44031"
+            ]
+        ]
+    },
+    {
+        "id": "c593147df2861c06",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "return table historical",
+        "func": "var now = new Date();\nvar month = (now.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-indexed\n\n// Construct the SQL query\nmsg.topic = `SELECT * FROM historical_data WHERE strftime('%m', time) = '${month}';`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 500,
+        "y": 800,
+        "wires": [
+            [
+                "8d6750de39c13060"
+            ]
+        ]
+    },
+    {
+        "id": "8d6750de39c13060",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 670,
+        "y": 800,
+        "wires": [
+            [
+                "df70c4591a58e36c"
+            ]
+        ]
+    },
+    {
+        "id": "b20e8a237fd901e1",
+        "type": "ui_chart",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "group": "f6e321ba4c832def",
+        "order": 1,
+        "width": 17,
+        "height": 18,
+        "label": "Temperature Percentage Loss",
+        "chartType": "horizontalBar",
+        "legend": "true",
+        "xformat": "HH:mm",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "604800",
+        "cutout": 0,
+        "useOneColor": true,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1710,
+        "y": 2360,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "8f313963a3dfc8ef",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "debug 7",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "topic",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1120,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "9fe6075921a44031",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "convert to col",
+        "func": "var data= msg.payload;\n\nlet transformedData = data.map(item => ({\n    col1: item.lat,\n    col2: item.lon,\n    col3: item.time,\n    col4: item.temperature_2m,\n    col5: item.wind_speed_10m,\n    col6: item.relative_humidity_2m,\n    col7: item.rain,\n    col8: item.snowfall,\n    col9: item.cloud_cover,\n    col10: item.measurement_time\n}));\n\nmsg.payload= transformedData\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 320,
+        "wires": [
+            [
+                "2ddd85d48261f425"
+            ]
+        ]
+    },
+    {
+        "id": "2ddd85d48261f425",
+        "type": "split",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 130,
+        "y": 380,
+        "wires": [
+            [
+                "c8760bc01a701bae"
+            ]
+        ]
+    },
+    {
+        "id": "7915a2bd409c8ff9",
+        "type": "join",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "mode": "auto",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": true,
+        "timeout": "",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 430,
+        "y": 380,
+        "wires": [
+            [
+                "6142307d0a88480e"
+            ]
+        ]
+    },
+    {
+        "id": "ee3e3c744b6d8b70",
+        "type": "delay",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "2",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 140,
+        "y": 320,
+        "wires": [
+            [
+                "8c6429e0c1156854"
+            ]
+        ]
+    },
+    {
+        "id": "df8eb757a3e76226",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "filter",
+        "func": "var temperature = new Array();\nvar wind_speed_10m = new Array();\nvar relative_humidity_2m = new Array();\nvar rain = new Array();\nvar snowfall = new Array();\nvar cloud_cover = new Array();\n\ntemperature[0] = msg.payload.col4;\nwind_speed_10m[0] = msg.payload.col5;\nrelative_humidity_2m[0] = msg.payload.col6;\nrain[0] = msg.payload.col7;\nsnowfall[0] = msg.payload.col8;\ncloud_cover[0] = msg.payload.col9;\n\nmsg.payload = {};\nmsg.payload = {\n    temperature: temperature,\n    wind_speed_10: wind_speed_10m,\n    relative_humidity_2m: relative_humidity_2m,\n    rain: rain,\n    snowfall: snowfall,\n    cloud_cover: cloud_cover\n};\nreturn msg;\n\n\n\n\n\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 290,
+        "y": 860,
+        "wires": [
+            [
+                "e31923e230c4478d"
+            ]
+        ]
+    },
+    {
+        "id": "c76d84bc3ba8c5a3",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "kmeans clusters",
+        "func": "var clusterMaker = context.global.clusters;\n\nclusterMaker.k(3);\nclusterMaker.iterations(750);\n\n\nlet tempDataForClustering = msg.payload.map(item => [item.temperature[0]]);\nclusterMaker.data(tempDataForClustering);\n\n// Perform temperature clustering\nlet tempClusters = clusterMaker.clusters();\n\n// Sort clusters based on the temperature centroid (0 index)\ntempClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted temperature clusters globally\nglobal.set(\"foundclusters_temp\", tempClusters);\n\n\n// Data for wind speed clustering\nlet windDataForClustering = msg.payload.map(item => [item.wind_speed_10[0]]);\nclusterMaker.data(windDataForClustering);\n\n// Perform wind speed clustering\nlet windClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\nwindClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_wind\", windClusters);\n\n\n// Data for humidity clustering\nlet humidityDataForClustering = msg.payload.map(item => [item.relative_humidity_2m[0]]);\nclusterMaker.data(humidityDataForClustering);\n\n// Perform wind speed clustering\nlet humidityClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\nhumidityClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_humidity\", humidityClusters);\n\n\n// Data for rain clustering\nlet rainDataForClustering = msg.payload.map(item => [item.rain[0]]);\nclusterMaker.data(rainDataForClustering);\n\n// Perform wind speed clustering\nlet rainClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\nrainClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_rain\", rainClusters);\n\n\n// Data for humidity clustering\nlet snowfallDataForClustering = msg.payload.map(item => [item.snowfall[0]]);\nclusterMaker.data(snowfallDataForClustering);\n\n// Perform wind speed clustering\nlet snowfallClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\nsnowfallClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_snowfall\", snowfallClusters);\n\n\n// Data for humidity clustering\nlet cloudCoverDataForClustering = msg.payload.map(item => [item.cloud_cover[0]]);\nclusterMaker.data(cloudCoverDataForClustering);\n\n// Perform wind speed clustering\nlet cloudCoverClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\ncloudCoverClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_cloudCover\", cloudCoverClusters);\n\n\n// Return the sorted clusters separately in the payload\nmsg.payload = {\n    sortedByTemp: tempClusters,\n    sortedByWind: windClusters,\n    sortedByHumidity: humidityClusters,\n    sortedByRain: rainClusters,\n    sortedBySnowfall: snowfallClusters,\n    sortedByCloudCover: cloudCoverClusters\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 620,
+        "y": 860,
+        "wires": [
+            [
+                "e09c1db52d242e34"
+            ]
+        ]
+    },
+    {
+        "id": "e09c1db52d242e34",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 830,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "2f3707e1e9779a05",
+        "type": "split",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 990,
+        "y": 800,
+        "wires": [
+            [
+                "df8eb757a3e76226"
+            ]
+        ]
+    },
+    {
+        "id": "e31923e230c4478d",
+        "type": "join",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "mode": "auto",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": true,
+        "timeout": "",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 430,
+        "y": 860,
+        "wires": [
+            [
+                "c76d84bc3ba8c5a3"
+            ]
+        ]
+    },
+    {
+        "id": "df70c4591a58e36c",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "convert to col",
+        "func": "var data= msg.payload;\n\nlet transformedData = data.map(item => ({\n    col1: item.lat,\n    col2: item.lon,\n    col3: item.time,\n    col4: item.temperature_2m,\n    col5: item.wind_speed_10m,\n    col6: item.relative_humidity_2m,\n    col7: item.rain,\n    col9: item.snowfall,\n    col10: item.cloud_cover,\n    col11: item.measurement_time\n}));\n\nmsg.payload= transformedData\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 830,
+        "y": 800,
+        "wires": [
+            [
+                "2f3707e1e9779a05"
+            ]
+        ]
+    },
+    {
+        "id": "d2699ad914b74622",
+        "type": "split",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 630,
+        "y": 540,
+        "wires": [
+            [
+                "21fdb236986f1baf"
+            ]
+        ]
+    },
+    {
+        "id": "7f6adf38a8dc1db8",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "return table future",
+        "func": "msg.topic = 'SELECT * FROM forecast_weather WHERE datetime(time) <= datetime(\"now\", \"localtime\")';\n\nreturn msg;\n\n\n\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 700,
+        "wires": [
+            [
+                "b87c01c6275ce17a"
+            ]
+        ]
+    },
+    {
+        "id": "b87c01c6275ce17a",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 530,
+        "y": 700,
+        "wires": [
+            [
+                "837e1530d909841c"
+            ]
+        ]
+    },
+    {
+        "id": "173ca4d5c089eb55",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "create table historical data",
+        "func": "msg.topic = 'create table historical_data (lat NUMBER,lon NUMBER,time TEXT UNIQUE,temperature_2m NUMBER,wind_speed_10m NUMBER,relative_humidity_2m NUMBER,rain NUMBER,snowfall NUMBER,cloud_cover NUMBER,measurement_time TEXT)';\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1110,
+        "y": 1080,
+        "wires": [
+            [
+                "2012a59be4aeb0ca"
+            ]
+        ]
+    },
+    {
+        "id": "f259b51f3e3c56dc",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 900,
+        "y": 1080,
+        "wires": [
+            [
+                "173ca4d5c089eb55"
+            ]
+        ]
+    },
+    {
+        "id": "2012a59be4aeb0ca",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1310,
+        "y": 1080,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "63dc063940890204",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "return table historical",
+        "func": "msg.topic='select * from historical_data';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1100,
+        "y": 1140,
+        "wires": [
+            [
+                "af09599eaa5e73ea"
+            ]
+        ]
+    },
+    {
+        "id": "efdf6b7f916d8590",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 900,
+        "y": 1140,
+        "wires": [
+            [
+                "63dc063940890204"
+            ]
+        ]
+    },
+    {
+        "id": "d425e312f755e8ea",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1470,
+        "y": 1140,
+        "wires": []
+    },
+    {
+        "id": "af09599eaa5e73ea",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1310,
+        "y": 1140,
+        "wires": [
+            [
+                "d425e312f755e8ea"
+            ]
+        ]
+    },
+    {
+        "id": "837e1530d909841c",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "insert historical from future ",
+        "func": "msg.payload.forEach((item) => {\n    \n    let insertQuery = `INSERT INTO historical_data (lat, lon, time, temperature_2m, wind_speed_10m, relative_humidity_2m, rain, snowfall, cloud_cover, measurement_time) VALUES (${item.lat}, ${item.lon}, '${item.time}', ${item.temperature_2m}, ${item.wind_speed_10m}, ${item.relative_humidity_2m}, ${item.rain}, ${item.snowfall}, ${item.cloud_cover}, '${item.measurement_time}')`;\n    insertQuery= insertQuery + 'ON CONFLICT DO NOTHING'\n    \n    node.send({topic: insertQuery});\n\n})\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 740,
+        "y": 700,
+        "wires": [
+            [
+                "4789152f27fef4ee"
+            ]
+        ]
+    },
+    {
+        "id": "4789152f27fef4ee",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 950,
+        "y": 700,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "20a1b39ce75c0f6d",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 900,
+        "y": 1200,
+        "wires": [
+            [
+                "111ebb5b842afa33"
+            ]
+        ]
+    },
+    {
+        "id": "111ebb5b842afa33",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "drop historical",
+        "func": "msg.topic = 'drop table historical_data';\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1080,
+        "y": 1200,
+        "wires": [
+            [
+                "a479d80c8325223c"
+            ]
+        ]
+    },
+    {
+        "id": "a479d80c8325223c",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1310,
+        "y": 1200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "92ed03d8e9e399d3",
+        "type": "comment",
+        "z": "998b1f4407f97de2",
+        "name": "historical data ",
+        "info": "",
+        "x": 150,
+        "y": 960,
+        "wires": []
+    },
+    {
+        "id": "e5d6eb21b6f2a9c3",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 1080,
+        "wires": [
+            [
+                "b8479ffcb33bf33f"
+            ]
+        ]
+    },
+    {
+        "id": "b8479ffcb33bf33f",
+        "type": "http request",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.6436&longitude=22.9309&start_date=2022-01-01&end_date=2024-01-01&hourly=temperature_2m,relative_humidity_2m,rain,snowfall,cloud_cover,wind_speed_10m",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 330,
+        "y": 1080,
+        "wires": [
+            [
+                "77c0daa2702ed76e"
+            ]
+        ]
+    },
+    {
+        "id": "77c0daa2702ed76e",
+        "type": "json",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 510,
+        "y": 1080,
+        "wires": [
+            [
+                "338135bb2c0c4abb"
+            ]
+        ]
+    },
+    {
+        "id": "338135bb2c0c4abb",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "parse historical data",
+        "func": "var data = msg.payload;\nmsg.payload = [];\n\n// Get the current date and time\nlet now = new Date();\n\n// Format the date components\nlet year = now.getFullYear();\nlet month = ('0' + (now.getMonth() + 1)).slice(-2);\nlet day = ('0' + now.getDate()).slice(-2);\n\n// Format the time components\nlet hours = ('0' + now.getHours()).slice(-2);\nlet minutes = ('0' + now.getMinutes()).slice(-2);\n\n// Combine the components into the desired format\nlet formattedTime = `${year}-${month}-${day}T${hours}:${minutes}`;\n\nfor (var k = 0; k < data.hourly.time.length; k++) {\n    msg.payload[k] = {};  // Initialize as an empty object\n        \n        msg.payload[k].lat = data.latitude;\n        msg.payload[k].lon = data.longitude;\n        msg.payload[k].time = data.hourly.time[k];\n        msg.payload[k].temperature_2m = data.hourly.temperature_2m[k];\n        msg.payload[k].wind_speed_10m = data.hourly.wind_speed_10m[k];\n        msg.payload[k].relative_humidity_2m = data.hourly.relative_humidity_2m[k];\n        msg.payload[k].rain = data.hourly.rain[k];\n        msg.payload[k].snowfall = data.hourly.snowfall[k];\n        msg.payload[k].cloud_cover = data.hourly.cloud_cover[k];\n        \n        msg.payload[k].measurement_time= formattedTime.trim();\n        msg.payload.measurement_time = msg.payload[k].measurement_time.replace(/[\\n↵]/g, '');\n\n}\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 180,
+        "y": 1140,
+        "wires": [
+            [
+                "78ae4661fec03627"
+            ]
+        ]
+    },
+    {
+        "id": "78ae4661fec03627",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "insert historical data",
+        "func": "var csvData = msg.payload;\n    msg.topic = \"INSERT OR IGNORE INTO historical_data (lat, lon, time, temperature_2m, wind_speed_10m, relative_humidity_2m, rain, snowfall, cloud_cover, measurement_time) VALUES \";\n    \n    var valuesList = csvData.map(row => {\n        var values = Object.values(row).map(value => {\n            return value === \"\" ? \"NULL\" : \"'\" + value.toString().replace(/'/g, \"''\") + \"'\";\n        });\n        \n        return `(${values.join(\",\")})`;\n    });\n    \n    msg.topic += valuesList.join(\",\") + \" ON CONFLICT(time) DO NOTHING\";\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 1140,
+        "wires": [
+            [
+                "66a0dcde643dfa95",
+                "e9f35903c879fb0e"
+            ]
+        ]
+    },
+    {
+        "id": "da045a050b3a3021",
+        "type": "link in",
+        "z": "998b1f4407f97de2",
+        "name": "link in 1",
+        "links": [
+            "66a0dcde643dfa95"
+        ],
+        "x": 1275,
+        "y": 1020,
+        "wires": [
+            [
+                "2012a59be4aeb0ca"
+            ]
+        ]
+    },
+    {
+        "id": "66a0dcde643dfa95",
+        "type": "link out",
+        "z": "998b1f4407f97de2",
+        "name": "link out 3",
+        "mode": "link",
+        "links": [
+            "da045a050b3a3021"
+        ],
+        "x": 635,
+        "y": 1100,
+        "wires": []
+    },
+    {
+        "id": "e9f35903c879fb0e",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "debug 8",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 640,
+        "y": 1140,
+        "wires": []
+    },
+    {
+        "id": "8c7a494fc2fd7c2b",
+        "type": "ui_dropdown",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "label": "",
+        "tooltip": "",
+        "place": "Select option",
+        "group": "f165eb7139452c4c",
+        "order": 1,
+        "width": 6,
+        "height": 1,
+        "passthru": true,
+        "multiple": false,
+        "options": [
+            {
+                "label": "None",
+                "value": "none",
+                "type": "str"
+            },
+            {
+                "label": "Temperature",
+                "value": "temperature",
+                "type": "str"
+            },
+            {
+                "label": "Wind Speed",
+                "value": "wind speed",
+                "type": "str"
+            },
+            {
+                "label": "Humidity",
+                "value": "humidity",
+                "type": "str"
+            },
+            {
+                "label": "Rain",
+                "value": "rain",
+                "type": "str"
+            },
+            {
+                "label": "Snowfall",
+                "value": "snowfall",
+                "type": "str"
+            },
+            {
+                "label": "Cloud Cover",
+                "value": "cloud cover",
+                "type": "str"
+            },
+            {
+                "label": "All",
+                "value": "all",
+                "type": "str"
+            }
+        ],
+        "payload": "",
+        "topic": "payload",
+        "topicType": "msg",
+        "className": "",
+        "x": 160,
+        "y": 2580,
+        "wires": [
+            [
+                "2467b5529adcf21a"
+            ]
+        ]
+    },
+    {
+        "id": "515262fbd2d0a040",
+        "type": "change",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{\"group\":{\"show\":[\"WeatherThessaloniki_TemperaturePercentageLoss\"],\"hide\":[\"WeatherThessaloniki_WindSpeedPercentageLoss\",\"WeatherThessaloniki_HumidityPercentageLoss\",\"WeatherThessaloniki_RainPercentageLoss\",\"WeatherThessaloniki_SnowfallPercentageLoss\",\"WeatherThessaloniki_CloudCoverPercentageLoss\"]}}",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 580,
+        "y": 2460,
+        "wires": [
+            [
+                "db0212fb1b540776"
+            ]
+        ]
+    },
+    {
+        "id": "e13f0935febd93cc",
+        "type": "change",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{\"group\":{\"hide\":[\"WeatherThessaloniki_TemperaturePercentageLoss\",\"WeatherThessaloniki_WindSpeedPercentageLoss\",\"WeatherThessaloniki_HumidityPercentageLoss\",\"WeatherThessaloniki_RainPercentageLoss\",\"WeatherThessaloniki_SnowfallPercentageLoss\",\"WeatherThessaloniki_CloudCoverPercentageLoss\"]}}",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 580,
+        "y": 2420,
+        "wires": [
+            [
+                "645f7f41659619b4"
+            ]
+        ]
+    },
+    {
+        "id": "645f7f41659619b4",
+        "type": "ui_ui_control",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "events": "all",
+        "x": 1400,
+        "y": 2260,
+        "wires": [
+            [
+                "2a9fcd865baf87c1",
+                "2324732bb276fe04",
+                "5e133473e61fbd06",
+                "e48e54a48c0d63dd",
+                "b20e8a237fd901e1"
+            ]
+        ]
+    },
+    {
+        "id": "db0212fb1b540776",
+        "type": "ui_ui_control",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "events": "all",
+        "x": 840,
+        "y": 2560,
+        "wires": [
+            [
+                "4d61ca8b233c96a3"
+            ]
+        ]
+    },
+    {
+        "id": "fef6cf97f2fcb920",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1240,
+        "y": 1620,
+        "wires": [
+            [
+                "8a0646183775d203"
+            ]
+        ]
+    },
+    {
+        "id": "8a0646183775d203",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "return table percentage failure",
+        "func": "msg.topic ='select * from percentage_loss';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1490,
+        "y": 1620,
+        "wires": [
+            [
+                "688eaac40878455e"
+            ]
+        ]
+    },
+    {
+        "id": "688eaac40878455e",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1250,
+        "y": 1680,
+        "wires": [
+            [
+                "f5ca3331fd50af93"
+            ]
+        ]
+    },
+    {
+        "id": "f5ca3331fd50af93",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "debug 9",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1420,
+        "y": 1680,
+        "wires": []
+    },
+    {
+        "id": "f5b0a5551d45c99c",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 18",
+        "func": "let data = msg.payload;\n\n// Assuming msg.payload is an array of objects\nfor (let i = 0; i < data.length; i++) {\n    msg.topic = data[i].reported_time;\n    msg.payload = data[i].wind_speed_percentage;\n\n    node.send(msg);\n\n}\n\nreturn msg;\n\n\n\n\n\n\n\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2460,
+        "wires": [
+            [
+                "2a9fcd865baf87c1"
+            ]
+        ]
+    },
+    {
+        "id": "4b9f276bb7f72e8f",
+        "type": "change",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{\"group\":{\"hide\":[\"WeatherThessaloniki_TemperaturePercentageLoss\",\"WeatherThessaloniki_HumidityPercentageLoss\",\"WeatherThessaloniki_RainPercentageLoss\",\"WeatherThessaloniki_SnowfallPercentageLoss\",\"WeatherThessaloniki_CloudCoverPercentageLoss\"],\"show\":[\"WeatherThessaloniki_WindSpeedPercentageLoss\"]}}",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 580,
+        "y": 2500,
+        "wires": [
+            [
+                "db0212fb1b540776"
+            ]
+        ]
+    },
+    {
+        "id": "2a9fcd865baf87c1",
+        "type": "ui_chart",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "group": "12d71180ddc19357",
+        "order": 1,
+        "width": 17,
+        "height": 18,
+        "label": "Wind Speed Percentage  Loss",
+        "chartType": "horizontalBar",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "86400",
+        "cutout": 0,
+        "useOneColor": true,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1710,
+        "y": 2460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2467b5529adcf21a",
+        "type": "switch",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "none",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "temperature",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "wind speed",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "humidity",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "rain",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "snowfall",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "cloud cover",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "all",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 8,
+        "x": 350,
+        "y": 2580,
+        "wires": [
+            [
+                "e13f0935febd93cc"
+            ],
+            [
+                "515262fbd2d0a040"
+            ],
+            [
+                "4b9f276bb7f72e8f"
+            ],
+            [
+                "789b4217ceb20d3a"
+            ],
+            [
+                "d99ebccaf85d763e"
+            ],
+            [
+                "776ee03a82962461"
+            ],
+            [
+                "4cf1d5ba830bbf84"
+            ],
+            [
+                "f54efd74a7b33ca4"
+            ]
+        ]
+    },
+    {
+        "id": "5b62b3bf9e47d73f",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 23",
+        "func": "let data = msg.payload;\n\n// Assuming msg.payload is an array of objects\nfor (let i = 0; i < data.length; i++) {\n    msg.topic = data[i].reported_time;\n    msg.payload = data[i].cloud_cover_percentage;\n\n    node.send(msg);\n\n}\n\nreturn msg;\n\n\n\n\n\n\n\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2560,
+        "wires": [
+            [
+                "2324732bb276fe04"
+            ]
+        ]
+    },
+    {
+        "id": "789b4217ceb20d3a",
+        "type": "change",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{\"group\":{\"hide\":[\"WeatherThessaloniki_TemperaturePercentageLoss\",\"WeatherThessaloniki_WindSpeedPercentageLoss\",\"WeatherThessaloniki_RainPercentageLoss\",\"WeatherThessaloniki_SnowfallPercentageLoss\",\"WeatherThessaloniki_CloudCoverPercentageLoss\"],\"show\":[\"WeatherThessaloniki_HumidityPercentageLoss\"]}}",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 580,
+        "y": 2540,
+        "wires": [
+            [
+                "db0212fb1b540776"
+            ]
+        ]
+    },
+    {
+        "id": "2324732bb276fe04",
+        "type": "ui_chart",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "group": "f6d6b1b655707e4e",
+        "order": 1,
+        "width": 17,
+        "height": 18,
+        "label": "Cloud Cover Percentage Loss",
+        "chartType": "horizontalBar",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "86400",
+        "cutout": 0,
+        "useOneColor": true,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1710,
+        "y": 2560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f810b278ce402ce8",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 24",
+        "func": "let data = msg.payload;\n\n// Assuming msg.payload is an array of objects\nfor (let i = 0; i < data.length; i++) {\n    msg.topic = data[i].reported_time;\n    msg.payload = data[i].humidity_percentage;\n\n    node.send(msg);\n\n}\n\nreturn msg;\n\n\n\n\n\n\n\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2660,
+        "wires": [
+            [
+                "e87989f3f7e50c9d"
+            ]
+        ]
+    },
+    {
+        "id": "d99ebccaf85d763e",
+        "type": "change",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{\"group\":{\"hide\":[\"WeatherThessaloniki_TemperaturePercentageLoss\",\"WeatherThessaloniki_WindSpeedPercentageLoss\",\"WeatherThessaloniki_HumidityPercentageLoss\",\"WeatherThessaloniki_SnowfallPercentageLoss\",\"WeatherThessaloniki_CloudCoverPercentageLoss\"],\"show\":[\"WeatherThessaloniki_RainPercentageLoss\"]}}",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 580,
+        "y": 2580,
+        "wires": [
+            [
+                "db0212fb1b540776"
+            ]
+        ]
+    },
+    {
+        "id": "e87989f3f7e50c9d",
+        "type": "ui_chart",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "group": "63eabd46c53bdb9f",
+        "order": 1,
+        "width": 17,
+        "height": 18,
+        "label": "Humidity Percentage Loss",
+        "chartType": "horizontalBar",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "86400",
+        "cutout": 0,
+        "useOneColor": true,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1690,
+        "y": 2660,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "55f42755ca231483",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 25",
+        "func": "let data = msg.payload;\n\n// Assuming msg.payload is an array of objects\nfor (let i = 0; i < data.length; i++) {\n    msg.topic = data[i].reported_time;\n    msg.payload = data[i].rain_percentage;\n\n    node.send(msg);\n\n}\n\nreturn msg;\n\n\n\n\n\n\n\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2760,
+        "wires": [
+            [
+                "5e133473e61fbd06"
+            ]
+        ]
+    },
+    {
+        "id": "776ee03a82962461",
+        "type": "change",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{\"group\":{\"hide\":[\"WeatherThessaloniki_TemperaturePercentageLoss\",\"WeatherThessaloniki_WindSpeedPercentageLoss\",\"WeatherThessaloniki_HumidityPercentageLoss\",\"WeatherThessaloniki_RainPercentageLoss\",\"WeatherThessaloniki_CloudCoverPercentageLoss\"],\"show\":[\"WeatherThessaloniki_SnowfallPercentageLoss\"]}}",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 580,
+        "y": 2620,
+        "wires": [
+            [
+                "db0212fb1b540776"
+            ]
+        ]
+    },
+    {
+        "id": "5e133473e61fbd06",
+        "type": "ui_chart",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "group": "3e3cc41ef69e7e20",
+        "order": 1,
+        "width": 17,
+        "height": 18,
+        "label": "Rain Percentage Loss",
+        "chartType": "horizontalBar",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "86400",
+        "cutout": 0,
+        "useOneColor": true,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1680,
+        "y": 2760,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ca81b89087f7688e",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 26",
+        "func": "let data = msg.payload;\n\n// Assuming msg.payload is an array of objects\nfor (let i = 0; i < data.length; i++) {\n    msg.topic = data[i].reported_time;\n    msg.payload = data[i].snowfall_percentage;\n\n    node.send(msg);\n\n}\n\nreturn msg;\n\n\n\n\n\n\n\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2860,
+        "wires": [
+            [
+                "e48e54a48c0d63dd"
+            ]
+        ]
+    },
+    {
+        "id": "4cf1d5ba830bbf84",
+        "type": "change",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{\"group\":{\"hide\":[\"WeatherThessaloniki_TemperaturePercentageLoss\",\"WeatherThessaloniki_WindSpeedPercentageLoss\",\"WeatherThessaloniki_HumidityPercentageLoss\",\"WeatherThessaloniki_RainPercentageLoss\",\"WeatherThessaloniki_SnowfallPercentageLoss\"],\"show\":[\"WeatherThessaloniki_CloudCoverPercentageLoss\"]}}",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 580,
+        "y": 2660,
+        "wires": [
+            [
+                "db0212fb1b540776"
+            ]
+        ]
+    },
+    {
+        "id": "e48e54a48c0d63dd",
+        "type": "ui_chart",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "group": "0f4668a15576a727",
+        "order": 1,
+        "width": 17,
+        "height": 18,
+        "label": "Snowfall Percentage Loss",
+        "chartType": "horizontalBar",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "86400",
+        "cutout": 0,
+        "useOneColor": true,
+        "useUTC": false,
+        "colors": [
+            "#1582d1",
+            "#bad3f2",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1690,
+        "y": 2860,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "eaa94bd191182770",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 27",
+        "func": "let data = msg.payload;\n\n// // Assuming msg.payload is an array of objects\n// for (let i = 0; i < data.length; i++) {\n//     msg.topic = data[i].reported_time;\n//     msg.payload = data[i].wind_speed_percentage;\n//     msg.label= \"Wind speed\"\n//     node.send(msg);\n\n// }\n\nreturn msg;\n\n\n\n\n\n\n\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2920,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f54efd74a7b33ca4",
+        "type": "change",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{\"group\":{\"show\":[\"WeatherThessaloniki_TemperaturePercentageLoss\",\"WeatherThessaloniki_WindSpeedPercentageLoss\",\"WeatherThessaloniki_HumidityPercentageLoss\",\"WeatherThessaloniki_RainPercentageLoss\",\"WeatherThessaloniki_SnowfallPercentageLoss\",\"WeatherThessaloniki_CloudCoverPercentageLoss\"]}}",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 580,
+        "y": 2700,
+        "wires": [
+            [
+                "db0212fb1b540776"
+            ]
+        ]
+    },
+    {
+        "id": "d1270e085365abf4",
+        "type": "ui_gauge",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "group": "f6e321ba4c832def",
+        "order": 3,
+        "width": 7,
+        "height": 4,
+        "gtype": "wave",
+        "title": "",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "10",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 1630,
+        "y": 2320,
+        "wires": []
+    },
+    {
+        "id": "9f5e0e6d2e56c997",
+        "type": "ui_gauge",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "group": "12d71180ddc19357",
+        "order": 3,
+        "width": 7,
+        "height": 4,
+        "gtype": "wave",
+        "title": "",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 1630,
+        "y": 2420,
+        "wires": []
+    },
+    {
+        "id": "84a052585f2dd0c9",
+        "type": "ui_gauge",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "group": "f6d6b1b655707e4e",
+        "order": 3,
+        "width": 7,
+        "height": 4,
+        "gtype": "wave",
+        "title": "",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 1630,
+        "y": 2520,
+        "wires": []
+    },
+    {
+        "id": "27c06cd6cea5f472",
+        "type": "ui_gauge",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "group": "63eabd46c53bdb9f",
+        "order": 3,
+        "width": 7,
+        "height": 4,
+        "gtype": "wave",
+        "title": "",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 1630,
+        "y": 2620,
+        "wires": []
+    },
+    {
+        "id": "275ab03e2c9f0e8e",
+        "type": "ui_gauge",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "group": "3e3cc41ef69e7e20",
+        "order": 3,
+        "width": 7,
+        "height": 4,
+        "gtype": "wave",
+        "title": "",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 1630,
+        "y": 2720,
+        "wires": []
+    },
+    {
+        "id": "748b4e2847f71acf",
+        "type": "ui_gauge",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "group": "0f4668a15576a727",
+        "order": 3,
+        "width": 7,
+        "height": 4,
+        "gtype": "wave",
+        "title": "",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 1630,
+        "y": 2820,
+        "wires": []
+    },
+    {
+        "id": "fe5ed4d2603d7df6",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "Client 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 860,
+        "y": 2140,
+        "wires": []
+    },
+    {
+        "id": "d8c50a45841f0c3d",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 32",
+        "func": "\nmsg.topic = `select * from current_weather WHERE time = '${msg.payload.time}'`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1450,
+        "y": 1900,
+        "wires": [
+            [
+                "0993c4db9ed6110f"
+            ]
+        ]
+    },
+    {
+        "id": "0993c4db9ed6110f",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 1110,
+        "y": 1960,
+        "wires": [
+            [
+                "a38949e5ab6be53a"
+            ]
+        ]
+    },
+    {
+        "id": "a38949e5ab6be53a",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 33",
+        "func": "if (msg.payload.length > 0) {\n    return msg;\n} else {\n    msg.payload = { error: \"Data not found\" };\n    return msg;\n}\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1270,
+        "y": 1960,
+        "wires": [
+            [
+                "ac5c4cd295a5f47c"
+            ]
+        ]
+    },
+    {
+        "id": "990ca34b737c88b0",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "Return values from current",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "routingKey",
+                "v": "user1",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"request\":[\"temperature_2m\",\"wind_speed_10m\"],\"time\":\"2024-06-10T15:00\"}",
+        "payloadType": "json",
+        "x": 210,
+        "y": 2140,
+        "wires": [
+            [
+                "6c2ac4eeb0bb29c0"
+            ]
+        ]
+    },
+    {
+        "id": "7712d6fca754e772",
+        "type": "amqp-out",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "broker": "c30c32b9c705e88d",
+        "exchangeName": "amq.direct",
+        "exchangeType": "direct",
+        "exchangeRoutingKey": "user1",
+        "exchangeRoutingKeyType": "str",
+        "exchangeDurable": true,
+        "amqpProperties": "{ \"headers\": {} }",
+        "rpcTimeoutMilliseconds": 3000,
+        "outputs": 0,
+        "x": 550,
+        "y": 2200,
+        "wires": []
+    },
+    {
+        "id": "6c2ac4eeb0bb29c0",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 30",
+        "func": "var data = msg.payload;\nvar values = [];\n\nfor (var i = 0; i < data.request.length; i++) {\n    values.push(data.request[i]);\n}\n\nvar columns = values.join(\", \");\n\nmsg.topic = `select ${columns} from current_weather WHERE time = '${data.time}'`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 2140,
+        "wires": [
+            [
+                "4726356bc8923e3d"
+            ]
+        ]
+    },
+    {
+        "id": "4726356bc8923e3d",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 170,
+        "y": 2200,
+        "wires": [
+            [
+                "382a4044369aa9a0"
+            ]
+        ]
+    },
+    {
+        "id": "382a4044369aa9a0",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 31",
+        "func": "if (msg.payload.length > 0) {\n    return msg;\n} else {\n    msg.payload = { error: \"Data not found\" };\n    return msg;\n}\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 2200,
+        "wires": [
+            [
+                "7712d6fca754e772"
+            ]
+        ]
+    },
+    {
+        "id": "b008b4378017ad2b",
+        "type": "amqp-in",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "broker": "c30c32b9c705e88d",
+        "prefetch": 0,
+        "noAck": true,
+        "exchangeName": "",
+        "exchangeType": "direct",
+        "exchangeRoutingKey": "user1",
+        "exchangeDurable": true,
+        "queueName": "user1.weather",
+        "queueExclusive": false,
+        "queueDurable": true,
+        "queueAutoDelete": false,
+        "headers": "{}",
+        "x": 690,
+        "y": 2140,
+        "wires": [
+            [
+                "fe5ed4d2603d7df6"
+            ]
+        ]
+    },
+    {
+        "id": "376c11041ffe2612",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "Return all the values of this day",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "routingKey",
+                "v": "user2",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"time\":\"2024-06-10T15:00\"}",
+        "payloadType": "json",
+        "x": 1190,
+        "y": 1900,
+        "wires": [
+            [
+                "d8c50a45841f0c3d"
+            ]
+        ]
+    },
+    {
+        "id": "ac5c4cd295a5f47c",
+        "type": "amqp-out",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "broker": "c30c32b9c705e88d",
+        "exchangeName": "amq.direct",
+        "exchangeType": "direct",
+        "exchangeRoutingKey": "user2",
+        "exchangeRoutingKeyType": "str",
+        "exchangeDurable": true,
+        "amqpProperties": "{ \"headers\": {} }",
+        "rpcTimeoutMilliseconds": 3000,
+        "outputs": 0,
+        "x": 1470,
+        "y": 1960,
+        "wires": []
+    },
+    {
+        "id": "80f49a590419a40d",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "Client 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1320,
+        "y": 2040,
+        "wires": []
+    },
+    {
+        "id": "0eb50701a3fb913e",
+        "type": "amqp-in",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "broker": "c30c32b9c705e88d",
+        "prefetch": 0,
+        "noAck": true,
+        "exchangeName": "",
+        "exchangeType": "direct",
+        "exchangeRoutingKey": "user2",
+        "exchangeDurable": true,
+        "queueName": "user2.weather",
+        "queueExclusive": false,
+        "queueDurable": true,
+        "queueAutoDelete": false,
+        "headers": "{}",
+        "x": 1110,
+        "y": 2040,
+        "wires": [
+            [
+                "80f49a590419a40d"
+            ]
+        ]
+    },
+    {
+        "id": "761a86eb5c929f68",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "low",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 930,
+        "y": 1980,
+        "wires": []
+    },
+    {
+        "id": "bf4502f81cb143fc",
+        "type": "amqp-in",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "broker": "c30c32b9c705e88d",
+        "prefetch": 0,
+        "noAck": true,
+        "exchangeName": "amq.direct",
+        "exchangeType": "direct",
+        "exchangeRoutingKey": "low",
+        "exchangeDurable": true,
+        "queueName": "losspercentagelow.weather",
+        "queueExclusive": false,
+        "queueDurable": true,
+        "queueAutoDelete": false,
+        "headers": "{}",
+        "x": 740,
+        "y": 1980,
+        "wires": [
+            [
+                "761a86eb5c929f68"
+            ]
+        ]
+    },
+    {
+        "id": "90da0168c71d585a",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "return table percentage failure",
+        "func": "var now = new Date();\nvar month = (now.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-indexed\n\n// Construct the SQL query\nmsg.topic = `SELECT * FROM percentage_loss WHERE strftime('%m', current_measurement_time) = '${month}';`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 250,
+        "y": 1700,
+        "wires": [
+            [
+                "777b7a122ce5a1f4"
+            ]
+        ]
+    },
+    {
+        "id": "777b7a122ce5a1f4",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 470,
+        "y": 1700,
+        "wires": [
+            [
+                "1f07d9ecf5d477b6"
+            ]
+        ]
+    },
+    {
+        "id": "3ba45124a1d699d8",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "filter",
+        "func": "var temperature_percentage = new Array();\nvar wind_speed_percentage = new Array();\nvar humidity_percentage = new Array();\nvar rain_percentage = new Array();\nvar snowfall_percentage = new Array();\nvar cloud_cover_percentage = new Array();\n\ntemperature_percentage[0] = msg.payload.col4;\nwind_speed_percentage[0] = msg.payload.col5;\nhumidity_percentage[0] = msg.payload.col6;\nrain_percentage[0] = msg.payload.col7;\nsnowfall_percentage[0] = msg.payload.col8;\ncloud_cover_percentage[0] = msg.payload.col9;\n\nmsg.payload = {};\nmsg.payload = {\n    temperature_percentage: temperature_percentage,\n    wind_speed_percentage: wind_speed_percentage,\n    humidity_percentage: humidity_percentage,\n    rain_percentage: rain_percentage,\n    snowfall_percentage: snowfall_percentage,\n    cloud_cover_percentage: cloud_cover_percentage\n};\nreturn msg;\n\n\n\n\n\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 170,
+        "y": 1760,
+        "wires": [
+            [
+                "e0ed7b86cb8e580b"
+            ]
+        ]
+    },
+    {
+        "id": "3c9efc4398f46b7c",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "kmeans clusters",
+        "func": "var clusterMaker = context.global.clusters;\n\nclusterMaker.k(3);\nclusterMaker.iterations(750);\n\n\nlet tempDataForClustering = msg.payload.map(item => [item.temperature_percentage[0]]);\nclusterMaker.data(tempDataForClustering);\n\n// Perform temperature clustering\nlet tempClusters = clusterMaker.clusters();\n\n// Sort clusters based on the temperature centroid (0 index)\ntempClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted temperature clusters globally\nglobal.set(\"foundclusters_temp\", tempClusters);\n\n\n// Data for wind speed clustering\nlet windDataForClustering = msg.payload.map(item => [item.wind_speed_percentage[0]]);\nclusterMaker.data(windDataForClustering);\n\n// Perform wind speed clustering\nlet windClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\nwindClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_wind\", windClusters);\n\n\n// Data for humidity clustering\nlet humidityDataForClustering = msg.payload.map(item => [item.humidity_percentage[0]]);\nclusterMaker.data(humidityDataForClustering);\n\n// Perform wind speed clustering\nlet humidityClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\nhumidityClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_humidity\", humidityClusters);\n\n\n// Data for rain clustering\nlet rainDataForClustering = msg.payload.map(item => [item.rain_percentage[0]]);\nclusterMaker.data(rainDataForClustering);\n\n// Perform wind speed clustering\nlet rainClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\nrainClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_rain\", rainClusters);\n\n\n// Data for humidity clustering\nlet snowfallDataForClustering = msg.payload.map(item => [item.snowfall_percentage[0]]);\nclusterMaker.data(snowfallDataForClustering);\n\n// Perform wind speed clustering\nlet snowfallClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\nsnowfallClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_snowfall\", snowfallClusters);\n\n\n// Data for humidity clustering\nlet cloudCoverDataForClustering = msg.payload.map(item => [item.cloud_cover_percentage[0]]);\nclusterMaker.data(cloudCoverDataForClustering);\nnode.error(cloudCoverDataForClustering);\n// Perform wind speed clustering\nlet cloudCoverClusters = clusterMaker.clusters();\n\n// Sort clusters based on the wind speed centroid (0 index)\ncloudCoverClusters.sort(function(a, b) {\n    return parseFloat(a.centroid[0]) - parseFloat(b.centroid[0]);\n});\n\n// Save sorted wind speed clusters globally\nglobal.set(\"foundclusters_cloudCover\", cloudCoverClusters);\n\n\n// Return the sorted clusters separately in the payload\nmsg.payload = {\n    sortedByTemp: tempClusters,\n    sortedByWind: windClusters,\n    sortedByHumidity: humidityClusters,\n    sortedByRain: rainClusters,\n    sortedBySnowfall: snowfallClusters,\n    sortedByCloudCover: cloudCoverClusters\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 1760,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "55a55b15b8b9a899",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 790,
+        "y": 1580,
+        "wires": []
+    },
+    {
+        "id": "e516f68d58070e65",
+        "type": "split",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 810,
+        "y": 1700,
+        "wires": [
+            [
+                "3ba45124a1d699d8"
+            ]
+        ]
+    },
+    {
+        "id": "e0ed7b86cb8e580b",
+        "type": "join",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "mode": "auto",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": true,
+        "timeout": "",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 310,
+        "y": 1760,
+        "wires": [
+            [
+                "3c9efc4398f46b7c"
+            ]
+        ]
+    },
+    {
+        "id": "1f07d9ecf5d477b6",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "convert to col",
+        "func": "var data= msg.payload;\n\nlet transformedData = data.map(item => ({\n    col1: item.reported_time,\n    col2: item.current_measurement_time,\n    col3: item.forecast_measurement_time,\n    col4: item.temperature_percentage,\n    col5: item.wind_speed_percentage,\n    col6: item.humidity_percentage,\n    col7: item.rain_percentage,\n    col9: item.snowfall_percentage,\n    col10: item.cloud_cover_percentage\n}));\n\nmsg.payload= transformedData\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 1700,
+        "wires": [
+            [
+                "e516f68d58070e65"
+            ]
+        ]
+    },
+    {
+        "id": "9ba542a96a000972",
+        "type": "delay",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "2",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 640,
+        "y": 1640,
+        "wires": [
+            [
+                "34bf928ef0450066"
+            ]
+        ]
+    },
+    {
+        "id": "98166fc16d949590",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "intercept and compare",
+        "func": "var data = msg.payload;\n\nvar temperature = data.temperature_percentage;\nvar windSpeed = data.wind_speed_percentage;\nvar humidity = data.humidity_percentage;\nvar rain = data.rain_percentage;\nvar snowfall = data.snowfall_percentage;\nvar cloud_cover = data.cloud_cover_percentage;\n\nvar localclusters_temp = global.get(\"foundclusters_temp\");\nvar localclusters_wind = global.get(\"foundclusters_wind\");\nvar localclusters_humidity = global.get(\"foundclusters_humidity\");\nvar localclusters_rain = global.get(\"foundclusters_rain\");\nvar localclusters_snowfall = global.get(\"foundclusters_snowfall\");\nvar localclusters_cloudCover = global.get(\"foundclusters_cloudCover\");\n\n\nvar overall_cluster_temp = -1;\nvar overall_cluster_wind = -1;\nvar overall_cluster_humidity = -1;\nvar overall_cluster_rain = -1;\nvar overall_cluster_snowfall = -1;\nvar overall_cluster_cloud_cover = -1;\n\n\nvar diff_temp;\nvar diff_wind;\nvar diff_humidity;\nvar diff_rain;\nvar diff_snowfall;\nvar diff_cloud_cover;\n\n\nvar min_temp = 10000000;\nvar min_wind = 10000000;\nvar min_humidity = 10000000;\nvar min_rain = 10000000;\nvar min_snowfall = 10000000;\nvar min_cloud_cover = 10000000;\n\n// Find the closest cluster for temperature\nfor (var k = 0; k < localclusters_temp.length; k++) {\n    diff_temp = Math.abs(localclusters_temp[k].centroid[0] - temperature);\n    if (diff_temp < min_temp) {\n        overall_cluster_temp = k;\n        min_temp = diff_temp;\n    }\n}\n\n// Find the closest cluster for wind speed\nfor (var k = 0; k < localclusters_wind.length; k++) {\n    diff_wind = Math.abs(localclusters_wind[k].centroid[0] - windSpeed);\n    if (diff_wind < min_wind) {\n        overall_cluster_wind = k;\n        min_wind = diff_wind;\n    }\n}\n\n// Find the closest cluster for humidity\nfor (var k = 0; k < localclusters_humidity.length; k++) {\n    diff_humidity = Math.abs(localclusters_humidity[k].centroid[0] - humidity);\n    if (diff_humidity < min_humidity) {\n        overall_cluster_humidity = k;\n        min_humidity = diff_humidity;\n    }\n}\n\n// Find the closest cluster for rain\nfor (var k = 0; k < localclusters_rain.length; k++) {\n    diff_rain = Math.abs(localclusters_rain[k].centroid[0] - rain);\n    if (diff_rain < min_rain) {\n        overall_cluster_rain = k;\n        min_rain = diff_rain;\n    }\n}\n\n// Find the closest cluster for snowfall\nfor (var k = 0; k < localclusters_snowfall.length; k++) {\n    diff_snowfall = Math.abs(localclusters_snowfall[k].centroid[0] - snowfall);\n    if (diff_snowfall < min_snowfall) {\n        overall_cluster_snowfall = k;\n        min_snowfall = diff_snowfall;\n    }\n}\n\n// Find the closest cluster for cloud cover\nfor (var k = 0; k < localclusters_cloudCover.length; k++) {\n    diff_cloud_cover = Math.abs(localclusters_cloudCover[k].centroid[0] - cloud_cover);\n    if (diff_cloud_cover < min_cloud_cover) {\n        overall_cluster_cloud_cover = k;\n        min_cloud_cover = diff_cloud_cover;\n    }\n}\n\n// Prepare the result payload\nmsg.payload = {};\nmsg.payload.time = data.reported_time;\n\n// Assign state and icon color based on the closest temperature cluster\nif (overall_cluster_temp === 0) {\n    msg.payload.temp_state = \"low\";\n} else if (overall_cluster_temp === 1) {\n    msg.payload.temp_state = \"medium\";\n} else if (overall_cluster_temp === 2) {\n    msg.payload.temp_state = \"high\";\n}\n\n// Assign state and icon color based on the closest wind speed cluster\nif (overall_cluster_wind === 0) {\n    msg.payload.wind_state = \"Low\";\n} else if (overall_cluster_wind === 1) {\n    msg.payload.wind_state = \"Medium\";\n} else if (overall_cluster_wind === 2) {\n    msg.payload.wind_state = \"high\";\n}\n\n\n// Assign state and icon color based on the closest humidity cluster\nif (overall_cluster_humidity === 0) {\n    msg.payload.humidity_state = \"low\";\n} else if (overall_cluster_humidity === 1) {\n    msg.payload.humidity_state = \"medium\";\n} else if (overall_cluster_humidity === 2) {\n    msg.payload.humidity_state = \"high\";\n}\n\n\n// Assign state and icon color based on the closest rain cluster\nif (overall_cluster_rain === 0) {\n    msg.payload.rain_state = \"low\";\n} else if (overall_cluster_rain === 1) {\n    msg.payload.rain_state = \"medium\";\n} else if (overall_cluster_rain === 2) {\n    msg.payload.rain_state = \"high\";\n}\n\n\n// Assign state and icon color based on the closest snowfall cluster\nif (overall_cluster_snowfall === 0) {\n    msg.payload.snowfall_state = \"low\";\n} else if (overall_cluster_snowfall === 1) {\n    msg.payload.snowfall_state = \"medium\";\n} else if (overall_cluster_snowfall === 2) {\n    msg.payload.snowfall_state = \"high\";\n}\n\n// Assign state and icon color based on the closest cloud cover cluster\nif (overall_cluster_cloud_cover === 0) {\n    msg.payload.cloud_state = \"low\";\n} else if (overall_cluster_cloud_cover === 1) {\n    msg.payload.cloud_state = \"medium\";\n} else if (overall_cluster_cloud_cover === 2) {\n    msg.payload.cloud_state = \"high\";\n}\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 1580,
+        "wires": [
+            [
+                "55a55b15b8b9a899"
+            ]
+        ]
+    },
+    {
+        "id": "34bf928ef0450066",
+        "type": "split",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 810,
+        "y": 1640,
+        "wires": [
+            [
+                "98166fc16d949590"
+            ]
+        ]
+    },
+    {
+        "id": "a176b0fffdb85b62",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 37",
+        "func": "let data = msg.payload;\nlet totalTemperature = 0;\n\n// Assuming msg.payload is an array of objects\nfor (let i = 0; i < data.length; i++) {\n    totalTemperature += data[i].temperature_percentage;\n}\n\nlet averageTemperature = totalTemperature / data.length;\nmsg.payload = averageTemperature;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2320,
+        "wires": [
+            [
+                "d1270e085365abf4"
+            ]
+        ]
+    },
+    {
+        "id": "e68886147f5d096e",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 38",
+        "func": "let data = msg.payload;\nlet totalWind = 0;\n\n// Assuming msg.payload is an array of objects\nfor (let i = 0; i < data.length; i++) {\n    totalWind += data[i].wind_speed_percentage;\n}\n\nlet averageWind = totalWind / data.length;\nmsg.payload = averageWind;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2420,
+        "wires": [
+            [
+                "9f5e0e6d2e56c997"
+            ]
+        ]
+    },
+    {
+        "id": "1e95980491085352",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 39",
+        "func": "let data = msg.payload;\nlet totalHumidity = 0;\n\n// Assuming msg.payload is an array of objects\nfor (let i = 0; i < data.length; i++) {\n    totalHumidity += data[i].humidity_percentage;\n}\n\nlet averageHumidity = totalHumidity / data.length;\nmsg.payload = averageHumidity;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2620,
+        "wires": [
+            [
+                "27c06cd6cea5f472"
+            ]
+        ]
+    },
+    {
+        "id": "628821549b5b62ff",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 40",
+        "func": "let data = msg.payload;\nlet totalRain = 0;\n\n// Assuming msg.payload is an array of objects\nfor (let i = 0; i < data.length; i++) {\n    totalRain += data[i].rain_percentage;\n}\n\nlet averageRain = totalRain / data.length;\nmsg.payload = averageRain;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2720,
+        "wires": [
+            [
+                "275ab03e2c9f0e8e"
+            ]
+        ]
+    },
+    {
+        "id": "35a8d0ede349dd7a",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 41",
+        "func": "let data = msg.payload;\nlet totalSnowfall = 0;\n\n// Assuming msg.payload is an array of objects\nfor (let i = 0; i < data.length; i++) {\n    totalSnowfall += data[i].snowfall_percentage;\n}\n\nlet averageSnowfall = totalSnowfall / data.length;\nmsg.payload = averageSnowfall;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2820,
+        "wires": [
+            [
+                "748b4e2847f71acf"
+            ]
+        ]
+    },
+    {
+        "id": "02dedf332ab571b1",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 42",
+        "func": "let data = msg.payload;\nlet totalCloud = 0;\n\n// Assuming msg.payload is an array of objects\nfor (let i = 0; i < data.length; i++) {\n    totalCloud += data[i].cloud_cover_percentage;\n}\n\nlet averageCloud = totalCloud / data.length;\nmsg.payload = averageCloud;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2520,
+        "wires": [
+            [
+                "84a052585f2dd0c9"
+            ]
+        ]
+    },
+    {
+        "id": "729a21870d7b43e8",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "reset chart",
+        "func": "// Reset the chart data\nmsg.payload = [];\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2980,
+        "wires": [
+            [
+                "2a9fcd865baf87c1",
+                "2324732bb276fe04",
+                "e87989f3f7e50c9d",
+                "5e133473e61fbd06",
+                "e48e54a48c0d63dd",
+                "b20e8a237fd901e1"
+            ]
+        ]
+    },
+    {
+        "id": "4d61ca8b233c96a3",
+        "type": "ui_dropdown",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "label": "Field",
+        "tooltip": "",
+        "place": "Select option",
+        "group": "f165eb7139452c4c",
+        "order": 2,
+        "width": 6,
+        "height": 1,
+        "passthru": true,
+        "multiple": false,
+        "options": [
+            {
+                "label": "all",
+                "value": "all",
+                "type": "str"
+            },
+            {
+                "label": "1 month",
+                "value": "1 month",
+                "type": "str"
+            },
+            {
+                "label": "1 week",
+                "value": "1 week",
+                "type": "str"
+            },
+            {
+                "label": "1 day",
+                "value": "1 day",
+                "type": "str"
+            }
+        ],
+        "payload": "",
+        "topic": "topic",
+        "topicType": "msg",
+        "className": "",
+        "x": 1030,
+        "y": 2560,
+        "wires": [
+            [
+                "356ec2db8f4e92cf"
+            ]
+        ]
+    },
+    {
+        "id": "356ec2db8f4e92cf",
+        "type": "change",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "filter.field",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 870,
+        "y": 2620,
+        "wires": [
+            [
+                "1e29a0628bce3175"
+            ]
+        ]
+    },
+    {
+        "id": "544b051636c68281",
+        "type": "comment",
+        "z": "998b1f4407f97de2",
+        "name": "Thessaloniki",
+        "info": "",
+        "x": 1010,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "757be31eb167b0bb",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "function 43",
+        "func": "var routingKey = msg.payload.routingKey;\n\nmsg.topic = `select * from percentage_loss WHERE substr(reported_time, -16, 16) = '${msg.payload.time}'`;\n\nmsg.routingKey = routingKey;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 1920,
+        "wires": [
+            [
+                "77211cb6c52b56cd"
+            ]
+        ]
+    },
+    {
+        "id": "bf5b4ac249f963fa",
+        "type": "inject",
+        "z": "998b1f4407f97de2",
+        "name": "Return all the values of this day ",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"routingKey\":\"low\",\"time\":\"2024-06-09T23:00\"}",
+        "payloadType": "json",
+        "x": 230,
+        "y": 1920,
+        "wires": [
+            [
+                "757be31eb167b0bb"
+            ]
+        ]
+    },
+    {
+        "id": "aa8acc1a913bc2d9",
+        "type": "amqp-out",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "broker": "c30c32b9c705e88d",
+        "exchangeName": "amq.direct",
+        "exchangeType": "direct",
+        "exchangeRoutingKey": "payload.routingKey",
+        "exchangeRoutingKeyType": "msg",
+        "exchangeDurable": true,
+        "amqpProperties": "{ \"headers\": {} }",
+        "rpcTimeoutMilliseconds": 3000,
+        "outputs": 0,
+        "x": 490,
+        "y": 1980,
+        "wires": []
+    },
+    {
+        "id": "355cdab1e88b39c9",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "intercept and compare",
+        "func": "var data = msg.payload;\nvar routingKey = msg.routingKey;\n\nvar temperature = data.temperature_percentage;\nvar windSpeed = data.wind_speed_percentage;\nvar humidity = data.humidity_percentage;\nvar rain = data.rain_percentage;\nvar snowfall = data.snowfall_percentage;\nvar cloud_cover = data.cloud_cover_percentage;\n\nvar localclusters_temp = global.get(\"foundclusters_temp\");\nvar localclusters_wind = global.get(\"foundclusters_wind\");\nvar localclusters_humidity = global.get(\"foundclusters_humidity\");\nvar localclusters_rain = global.get(\"foundclusters_rain\");\nvar localclusters_snowfall = global.get(\"foundclusters_snowfall\");\nvar localclusters_cloudCover = global.get(\"foundclusters_cloudCover\");\n\n\nvar overall_cluster_temp = -1;\nvar overall_cluster_wind = -1;\nvar overall_cluster_humidity = -1;\nvar overall_cluster_rain = -1;\nvar overall_cluster_snowfall = -1;\nvar overall_cluster_cloud_cover = -1;\n\n\nvar diff_temp;\nvar diff_wind;\nvar diff_humidity;\nvar diff_rain;\nvar diff_snowfall;\nvar diff_cloud_cover;\n\n\nvar min_temp = 10000000;\nvar min_wind = 10000000;\nvar min_humidity = 10000000;\nvar min_rain = 10000000;\nvar min_snowfall = 10000000;\nvar min_cloud_cover = 10000000;\n\n// Find the closest cluster for temperature\nfor (var k = 0; k < localclusters_temp.length; k++) {\n    diff_temp = Math.abs(localclusters_temp[k].centroid[0] - temperature);\n    if (diff_temp < min_temp) {\n        overall_cluster_temp = k;\n        min_temp = diff_temp;\n    }\n}\n\n// Find the closest cluster for wind speed\nfor (var k = 0; k < localclusters_wind.length; k++) {\n    diff_wind = Math.abs(localclusters_wind[k].centroid[0] - windSpeed);\n    if (diff_wind < min_wind) {\n        overall_cluster_wind = k;\n        min_wind = diff_wind;\n    }\n}\n\n// Find the closest cluster for humidity\nfor (var k = 0; k < localclusters_humidity.length; k++) {\n    diff_humidity = Math.abs(localclusters_humidity[k].centroid[0] - humidity);\n    if (diff_humidity < min_humidity) {\n        overall_cluster_humidity = k;\n        min_humidity = diff_humidity;\n    }\n}\n\n// Find the closest cluster for rain\nfor (var k = 0; k < localclusters_rain.length; k++) {\n    diff_rain = Math.abs(localclusters_rain[k].centroid[0] - rain);\n    if (diff_rain < min_rain) {\n        overall_cluster_rain = k;\n        min_rain = diff_rain;\n    }\n}\n\n// Find the closest cluster for snowfall\nfor (var k = 0; k < localclusters_snowfall.length; k++) {\n    diff_snowfall = Math.abs(localclusters_snowfall[k].centroid[0] - snowfall);\n    if (diff_snowfall < min_snowfall) {\n        overall_cluster_snowfall = k;\n        min_snowfall = diff_snowfall;\n    }\n}\n\n// Find the closest cluster for cloud cover\nfor (var k = 0; k < localclusters_cloudCover.length; k++) {\n    diff_cloud_cover = Math.abs(localclusters_cloudCover[k].centroid[0] - cloud_cover);\n    if (diff_cloud_cover < min_cloud_cover) {\n        overall_cluster_cloud_cover = k;\n        min_cloud_cover = diff_cloud_cover;\n    }\n}\n\n// Prepare the result payload\nmsg.payload = {};\nmsg.payload.time = data.reported_time;\n\n// Assign state and icon color based on the closest temperature cluster\nif (overall_cluster_temp === 0) {\n    msg.payload.temp_state = \"low\";\n} else if (overall_cluster_temp === 1) {\n    msg.payload.temp_state = \"medium\";\n} else if (overall_cluster_temp === 2) {\n    msg.payload.temp_state = \"high\";\n}\n\n// Assign state and icon color based on the closest wind speed cluster\nif (overall_cluster_wind === 0) {\n    msg.payload.wind_state = \"Low\";\n} else if (overall_cluster_wind === 1) {\n    msg.payload.wind_state = \"Medium\";\n} else if (overall_cluster_wind === 2) {\n    msg.payload.wind_state = \"high\";\n}\n\n\n// Assign state and icon color based on the closest humidity cluster\nif (overall_cluster_humidity === 0) {\n    msg.payload.humidity_state = \"low\";\n} else if (overall_cluster_humidity === 1) {\n    msg.payload.humidity_state = \"medium\";\n} else if (overall_cluster_humidity === 2) {\n    msg.payload.humidity_state = \"high\";\n}\n\n\n// Assign state and icon color based on the closest rain cluster\nif (overall_cluster_rain === 0) {\n    msg.payload.rain_state = \"low\";\n} else if (overall_cluster_rain === 1) {\n    msg.payload.rain_state = \"medium\";\n} else if (overall_cluster_rain === 2) {\n    msg.payload.rain_state = \"high\";\n}\n\n\n// Assign state and icon color based on the closest snowfall cluster\nif (overall_cluster_snowfall === 0) {\n    msg.payload.snowfall_state = \"low\";\n} else if (overall_cluster_snowfall === 1) {\n    msg.payload.snowfall_state = \"medium\";\n} else if (overall_cluster_snowfall === 2) {\n    msg.payload.snowfall_state = \"high\";\n}\n\n// Assign state and icon color based on the closest cloud cover cluster\nif (overall_cluster_cloud_cover === 0) {\n    msg.payload.cloud_state = \"low\";\n} else if (overall_cluster_cloud_cover === 1) {\n    msg.payload.cloud_state = \"medium\";\n} else if (overall_cluster_cloud_cover === 2) {\n    msg.payload.cloud_state = \"high\";\n}\n\n// Create a new payload containing only the matching state\nvar filteredPayload = {\n    time: msg.payload.time,\n    routingKey: routingKey\n};\n\nif (msg.payload.temp_state === routingKey) {\n    \n    filteredPayload.temp_state = msg.payload.temp_state;\n}\nif (msg.payload.wind_state === routingKey) {\n    filteredPayload.wind_state = msg.payload.wind_state;\n}\nif (msg.payload.humidity_state === routingKey) {\n    filteredPayload.humidity_state = msg.payload.humidity_state;\n}\nif (msg.payload.rain_state === routingKey) {\n    filteredPayload.rain_state = msg.payload.rain_state;\n}\nif (msg.payload.snowfall_state === routingKey) {\n    filteredPayload.snowfall_state = msg.payload.snowfall_state;\n}\nif (msg.payload.cloud_state === routingKey) {\n    filteredPayload.cloud_state = msg.payload.cloud_state;\n}\n\nif (Object.keys(filteredPayload).length > 1) { // Ensure there's more than just the time key\n    msg.payload = filteredPayload;\n    return msg;\n} else {\n\n    msg.payload = { \n        routingKey: routingKey,\n        error: \"Data not found\" \n        };\n    return msg; // Drop the message if no state matches the routingKey\n}\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 200,
+        "y": 1980,
+        "wires": [
+            [
+                "aa8acc1a913bc2d9"
+            ]
+        ]
+    },
+    {
+        "id": "a33739ef7cc86558",
+        "type": "split",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 850,
+        "y": 1920,
+        "wires": [
+            [
+                "355cdab1e88b39c9"
+            ]
+        ]
+    },
+    {
+        "id": "77211cb6c52b56cd",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 690,
+        "y": 1920,
+        "wires": [
+            [
+                "a33739ef7cc86558"
+            ]
+        ]
+    },
+    {
+        "id": "b1d0162f8819795e",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "medium",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 380,
+        "y": 2040,
+        "wires": []
+    },
+    {
+        "id": "e8ef20e6280d0b8e",
+        "type": "amqp-in",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "broker": "c30c32b9c705e88d",
+        "prefetch": 0,
+        "noAck": true,
+        "exchangeName": "amq.direct",
+        "exchangeType": "direct",
+        "exchangeRoutingKey": "medium",
+        "exchangeDurable": true,
+        "queueName": "losspercentagemedium.weather",
+        "queueExclusive": false,
+        "queueDurable": true,
+        "queueAutoDelete": false,
+        "headers": "{}",
+        "x": 190,
+        "y": 2040,
+        "wires": [
+            [
+                "b1d0162f8819795e"
+            ]
+        ]
+    },
+    {
+        "id": "370c4c8806c8d9ec",
+        "type": "debug",
+        "z": "998b1f4407f97de2",
+        "name": "high",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 790,
+        "y": 2040,
+        "wires": []
+    },
+    {
+        "id": "e1b5d34965837d5d",
+        "type": "amqp-in",
+        "z": "998b1f4407f97de2",
+        "name": "",
+        "broker": "c30c32b9c705e88d",
+        "prefetch": 0,
+        "noAck": true,
+        "exchangeName": "amq.direct",
+        "exchangeType": "direct",
+        "exchangeRoutingKey": "high",
+        "exchangeDurable": true,
+        "queueName": "losspercentagehigh.weather",
+        "queueExclusive": false,
+        "queueDurable": true,
+        "queueAutoDelete": false,
+        "headers": "{}",
+        "x": 600,
+        "y": 2040,
+        "wires": [
+            [
+                "370c4c8806c8d9ec"
+            ]
+        ]
+    },
+    {
+        "id": "67145b00e60e8e54",
+        "type": "comment",
+        "z": "998b1f4407f97de2",
+        "name": "RabbitMQ",
+        "info": "",
+        "x": 160,
+        "y": 1840,
+        "wires": []
+    },
+    {
+        "id": "9fa55927e3512f27",
+        "type": "comment",
+        "z": "998b1f4407f97de2",
+        "name": "Dashboard",
+        "info": "",
+        "x": 160,
+        "y": 2400,
+        "wires": []
+    },
+    {
+        "id": "89402fccefc9cf4a",
+        "type": "function",
+        "z": "998b1f4407f97de2",
+        "name": "return table percentage failure",
+        "func": "var now = new Date();\nvar month = (now.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-indexed\n\n// Construct the SQL query\nmsg.topic = `SELECT * FROM percentage_loss WHERE strftime('%m', current_measurement_time) = '${month}';`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 250,
+        "y": 1640,
+        "wires": [
+            [
+                "b3f0a9f2f304d241"
+            ]
+        ]
+    },
+    {
+        "id": "b3f0a9f2f304d241",
+        "type": "sqlite",
+        "z": "998b1f4407f97de2",
+        "mydb": "d31683d6f7ab314b",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "db",
+        "x": 470,
+        "y": 1640,
+        "wires": [
+            [
+                "9ba542a96a000972"
+            ]
+        ]
+    },
+    {
+        "id": "6744b91f1a8d61ad",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6e321ba4c832def",
+        "order": 2,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "fd50fa871caf0435",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6e321ba4c832def",
+        "order": 4,
+        "width": 6,
+        "height": 1
+    },
+    {
+        "id": "ad85353c33b05bc8",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6e321ba4c832def",
+        "order": 5,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "e31cd5f8560c25a4",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6e321ba4c832def",
+        "order": 6,
+        "width": 6,
+        "height": 1
+    },
+    {
+        "id": "34f39072b777592d",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6e321ba4c832def",
+        "order": 7,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "85b5aa8c9a372f1d",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6e321ba4c832def",
+        "order": 8,
+        "width": 6,
+        "height": 1
+    },
+    {
+        "id": "05154e58db26ab04",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6e321ba4c832def",
+        "order": 9,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "c6738cd9e23d2e26",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6e321ba4c832def",
+        "order": 10,
+        "width": 6,
+        "height": 1
+    },
+    {
+        "id": "af9dfef4abf972b3",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "12d71180ddc19357",
+        "order": 2,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "9060666d4c037ffc",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "12d71180ddc19357",
+        "order": 4,
+        "width": 6,
+        "height": 1
+    },
+    {
+        "id": "36f27784bcf9de01",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "12d71180ddc19357",
+        "order": 5,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "8a3272418a3386b3",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "12d71180ddc19357",
+        "order": 6,
+        "width": 6,
+        "height": 1
+    },
+    {
+        "id": "81b366d4330fef84",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "12d71180ddc19357",
+        "order": 7,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "966f151e13f2416a",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "12d71180ddc19357",
+        "order": 8,
+        "width": 6,
+        "height": 1
+    },
+    {
+        "id": "1bcd5a2ff45523d3",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "12d71180ddc19357",
+        "order": 9,
+        "width": 4,
+        "height": 1
+    },
+    {
+        "id": "a7225954091f0f98",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "12d71180ddc19357",
+        "order": 10,
+        "width": 6,
+        "height": 1
+    },
+    {
+        "id": "78f5c0a11537f14d",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6d6b1b655707e4e",
+        "order": 2,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "530033e365b91f53",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6d6b1b655707e4e",
+        "order": 4,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "1ae8c3077b28ec94",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6d6b1b655707e4e",
+        "order": 5,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "7b28abe4f7963fae",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6d6b1b655707e4e",
+        "order": 6,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "43e6224131b1e24e",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6d6b1b655707e4e",
+        "order": 7,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "4cb54264157d0ad6",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6d6b1b655707e4e",
+        "order": 8,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "8ddf6c883bb82b4d",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6d6b1b655707e4e",
+        "order": 9,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "3d4b19aebd6c7c01",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "f6d6b1b655707e4e",
+        "order": 10,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "dc9bb839a33254b4",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "63eabd46c53bdb9f",
+        "order": 2,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "b0b7d463f8b964de",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "63eabd46c53bdb9f",
+        "order": 4,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "c9b609b6a4d29a36",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "63eabd46c53bdb9f",
+        "order": 5,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "9a4e9af4d06766b0",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "63eabd46c53bdb9f",
+        "order": 6,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "c48ce26399bd350e",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "63eabd46c53bdb9f",
+        "order": 7,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "4307879dd340a28f",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "63eabd46c53bdb9f",
+        "order": 8,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "0d81cf015b28dc82",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "63eabd46c53bdb9f",
+        "order": 9,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "61f3b613908c160a",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "63eabd46c53bdb9f",
+        "order": 10,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "00ac1cba7a142fae",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "3e3cc41ef69e7e20",
+        "order": 2,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "90aac25281302e90",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "3e3cc41ef69e7e20",
+        "order": 4,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "2c2035092d1aa6cd",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "3e3cc41ef69e7e20",
+        "order": 5,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "b02aa8f6326c0b67",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "3e3cc41ef69e7e20",
+        "order": 6,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "b0ee13e508943426",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "3e3cc41ef69e7e20",
+        "order": 7,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "d2ef07d0651a77e9",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "3e3cc41ef69e7e20",
+        "order": 8,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "a1b86aea4916162b",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "3e3cc41ef69e7e20",
+        "order": 9,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "c069fde9ea7b43e5",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "3e3cc41ef69e7e20",
+        "order": 10,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "70c1b08d3dc8216d",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "0f4668a15576a727",
+        "order": 2,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "7673fa0d2d8982f2",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "0f4668a15576a727",
+        "order": 4,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "204ef400a17b19b0",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "0f4668a15576a727",
+        "order": 5,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "c4567ad536abc436",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "0f4668a15576a727",
+        "order": 6,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "3220c6f91c0476b5",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "0f4668a15576a727",
+        "order": 7,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "1432a665f06e397a",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "0f4668a15576a727",
+        "order": 8,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "bb80c13d9c1f619f",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "0f4668a15576a727",
+        "order": 9,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "e1b805fa8725438f",
+        "type": "ui_spacer",
+        "z": "998b1f4407f97de2",
+        "name": "spacer",
+        "group": "0f4668a15576a727",
+        "order": 10,
+        "width": 5,
+        "height": 1
+    },
+    {
+        "id": "d31683d6f7ab314b",
+        "type": "sqlitedb",
+        "db": "/place_your_path/weather_forecast",
+        "mode": "RWC"
+    },
+    {
+        "id": "f6e321ba4c832def",
+        "type": "ui_group",
+        "name": "TemperaturePercentageLoss",
+        "tab": "025b9aab316012e6",
+        "order": 1,
+        "disp": false,
+        "width": "17",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "f165eb7139452c4c",
+        "type": "ui_group",
+        "name": "WeatherFilter",
+        "tab": "025b9aab316012e6",
+        "order": 3,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "12d71180ddc19357",
+        "type": "ui_group",
+        "name": "WindSpeedPercentageLoss",
+        "tab": "025b9aab316012e6",
+        "order": 2,
+        "disp": false,
+        "width": "17",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "f6d6b1b655707e4e",
+        "type": "ui_group",
+        "name": "CloudCoverPercentageLoss",
+        "tab": "025b9aab316012e6",
+        "order": 4,
+        "disp": false,
+        "width": "17",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "63eabd46c53bdb9f",
+        "type": "ui_group",
+        "name": "HumidityPercentageLoss",
+        "tab": "025b9aab316012e6",
+        "order": 5,
+        "disp": false,
+        "width": "17",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "3e3cc41ef69e7e20",
+        "type": "ui_group",
+        "name": "RainPercentageLoss",
+        "tab": "025b9aab316012e6",
+        "order": 6,
+        "disp": false,
+        "width": "17",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "0f4668a15576a727",
+        "type": "ui_group",
+        "name": "SnowfallPercentageLoss",
+        "tab": "025b9aab316012e6",
+        "order": 7,
+        "disp": false,
+        "width": "17",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "c30c32b9c705e88d",
+        "type": "amqp-broker",
+        "name": "",
+        "host": "localhost",
+        "port": "5672",
+        "vhost": "",
+        "tls": false,
+        "credsFromSettings": false
+    },
+    {
+        "id": "025b9aab316012e6",
+        "type": "ui_tab",
+        "name": "WeatherThessaloniki",
+        "icon": "dashboard",
+        "order": 2,
+        "disabled": false,
+        "hidden": false
+    }
+]
